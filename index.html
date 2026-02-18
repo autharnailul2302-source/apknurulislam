@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Laporan Keuangan Musholla</title>
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary-color: #0f5132;
+      --accent-color: #198754;
+      --bg-color: #f0f2f5;
+    }
+    body { font-family: 'Poppins', sans-serif; background-color: var(--bg-color); padding-bottom: 80px; }
+    
+    /* Header Compact */
+    .masjid-header {
+      background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+      color: white; padding: 1.5rem 1rem 3rem 1rem;
+      border-radius: 0 0 25px 25px; text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+    
+    /* Running Text Ticker (Sticky Style) */
+    .ticker-container {
+      background: #212529; /* Dark background */
+      width: 100%;
+      height: 35px;
+      overflow: hidden;
+      position: relative;
+      margin-top: -25px; /* Pull up to overlap header slightly */
+      margin-bottom: 10px;
+      z-index: 2;
+      border-bottom: 3px solid #ffc107; /* Gold accent line */
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .ticker-wrapper {
+      display: inline-block;
+      white-space: nowrap;
+      padding-left: 100%; /* Start off-screen */
+      animation: ticker-scroll 25s linear infinite;
+    }
+    .ticker-item {
+      display: inline-block;
+      padding: 0 20px;
+      font-size: 0.85rem;
+      color: white;
+      line-height: 35px;
+    }
+    .ticker-item i { color: #ffc107; margin-right: 5px; }
+    
+    @keyframes ticker-scroll {
+      0% { transform: translate3d(0, 0, 0); }
+      100% { transform: translate3d(-100%, 0, 0); }
+    }
+
+    /* Filter Bar */
+    .filter-card {
+      background: white; border-radius: 15px;
+      margin: 0 15px 15px 15px;
+      padding: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      position: relative; z-index: 10;
+    }
+
+    /* Info Cards */
+    .info-box {
+      background: white; border-radius: 12px; padding: 15px;
+      text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      margin-bottom: 10px;
+    }
+    .label-kecil { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #888; }
+    .angka-besar { font-weight: 700; font-size: 1.2rem; color: #333; }
+
+    /* List Transaksi */
+    .trans-item {
+      background: white; border-radius: 10px; padding: 12px; margin-bottom: 8px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-left: 4px solid #ccc;
+    }
+    .trans-masuk { border-left-color: #198754; }
+    .trans-keluar { border-left-color: #dc3545; }
+    .trans-barang { border-left-color: #0dcaf0; } /* Warna Cyan untuk Barang */
+    .tgl-badge { font-size: 0.7rem; background: #eee; padding: 2px 6px; border-radius: 4px; }
+
+    /* Admin & Fab */
+    #adminSection { display: none; background: white; padding: 20px; border-radius: 15px; margin: 20px 15px; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); border-top: 5px solid var(--accent-color); }
+    .fab { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; background-color: var(--primary-color); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 100; }
+    
+    .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+    
+    /* Style Khusus Form Keuangan Baru */
+    .input-debet { border-color: #198754 !important; background-color: #f0fff4 !important; }
+    .input-kredit { border-color: #dc3545 !important; background-color: #fff5f5 !important; }
+    .input-debet:focus { box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25) !important; }
+    .input-kredit:focus { box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25) !important; }
+
+    /* Style Dashboard Menu Grid */
+    .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; }
+    .menu-item { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px 10px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+    .menu-item:hover { background: white; border-color: var(--accent-color); box-shadow: 0 5px 15px rgba(0,0,0,0.08); transform: translateY(-3px); }
+    .menu-item i { font-size: 2rem; margin-bottom: 10px; display: block; }
+    .menu-item span { font-size: 0.8rem; font-weight: 600; color: #444; display: block; line-height: 1.2; }
+    
+    .nav-breadcrumb { display: flex; align-items: center; margin-bottom: 15px; cursor: pointer; color: #666; font-size: 0.9rem; font-weight: 600; }
+    .nav-breadcrumb:hover { color: var(--primary-color); }
+
+    /* List Donatur */
+    .donatur-item { background: white; border:1px solid #eee; border-radius: 8px; padding: 10px; margin-bottom: 8px; display: flex; align-items: flex-start; }
+    .avatar-char { width: 35px; height: 35px; background: #e9ecef; color: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px; flex-shrink: 0; margin-top: 2px; }
+
+    /* Style Khusus Info Barang */
+    .bg-barang { background: linear-gradient(135deg, #e0f7fa, #b2ebf2); border: 1px solid #4dd0e1; }
+    
+    /* Nav Tabs Custom */
+    .nav-tabs .nav-link { color: #6c757d; font-weight: 600; font-size: 0.85rem; }
+    .nav-tabs .nav-link.active { color: var(--primary-color); border-bottom: 3px solid var(--primary-color); }
+
+    /* --- STYLE KHUSUS CETAK / PRINT --- */
+    @media print {
+        /* Sembunyikan elemen navigasi dan tombol */
+        .fab, .masjid-header, .filter-card button, .nav-breadcrumb, 
+        .btn-close, .nav-tabs, #reportFilters button, .d-grid, .ticker-container {
+            display: none !important;
+        }
+        
+        /* Reset background dan warna */
+        body { background-color: white; padding: 0; font-size: 12pt; }
+        #adminSection { 
+            display: block !important; 
+            position: static; 
+            box-shadow: none; 
+            border: none; 
+            margin: 0; 
+            padding: 0;
+        }
+        
+        /* Tampilkan Header Laporan Resmi */
+        #menuCetak::before {
+            content: "LAPORAN KEUANGAN & INVENTARIS MUSHOLLA NURUL ISLAM";
+            display: block;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14pt;
+            margin-bottom: 5px;
+            border-bottom: 2px solid black;
+            padding-bottom: 10px;
+        }
+        #menuCetak::after {
+            content: "Dicetak pada: " attr(data-print-date);
+            display: block;
+            text-align: right;
+            font-size: 8pt;
+            color: #666;
+            margin-top: 20px;
+        }
+
+        /* Rapikan area filter yang terpilih */
+        #reportFilters { border: none !important; padding: 0 !important; background: none !important; }
+        #reportFilters select { border: none; appearance: none; background: none; font-weight: bold; padding: 0; }
+        #reportFilters label { display: inline-block; margin-right: 5px; }
+        
+        /* Rapikan area preview */
+        #reportPreviewArea { border: 1px solid #000 !important; box-shadow: none !important; margin-top: 10px; }
+        
+        /* Sembunyikan menu lain selain menu cetak saat mode print */
+        #loginStep, #dashMenu, #menuProfil, #menuDonatur, #menuInput, #menuKasAwal {
+            display: none !important;
+        }
+        /* Pastikan menu cetak terlihat */
+        #menuCetak { display: block !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading -->
+  <div id="loading" class="loading-overlay">
+    <div class="text-center">
+      <div class="spinner-border text-success mb-2" role="status"></div>
+      <div class="small text-muted">Menghubungkan Database...</div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="masjid-header">
+    <h5 class="fw-bold mb-0"><i class="fas fa-mosque me-2"></i>Musholla Nurul Islam</h5>
+    <small class="opacity-75" id="headerSaldo">Total Saldo: Rp 0</small>
+  </header>
+
+  <!-- Running Text / Ticker -->
+  <div class="ticker-container">
+      <div class="ticker-wrapper" id="newsTickerContent">
+          <div class="ticker-item">Selamat Datang di Aplikasi Keuangan Musholla Nurul Islam</div>
+      </div>
+  </div>
+
+  <!-- Filter Section -->
+  <div class="filter-card">
+    <div class="row g-2 align-items-center">
+      <div class="col-4">
+        <select class="form-select form-select-sm" id="filterType" onchange="updateFilterUI()">
+          <option value="semua">Terbaru</option>
+          <option value="harian">Harian</option>
+          <option value="bulanan" selected>Bulanan</option>
+          <option value="tahunan">Tahunan</option>
+        </select>
+      </div>
+      
+      <!-- Input Dinamis sesuai Pilihan -->
+      <div class="col-8" id="filterInputContainer">
+        <!-- Akan diisi oleh JS -->
+      </div>
+    </div>
+    <button class="btn btn-success btn-sm w-100 mt-2" onclick="applyFilter()">
+      <i class="fas fa-search me-1"></i> Tampilkan Laporan
+    </button>
+  </div>
+
+  <div class="container px-3">
+    
+    <!-- Ringkasan Periode Ini (Keuangan) -->
+    <div class="row g-2 mb-2">
+      <div class="col-6">
+        <div class="info-box">
+          <div class="label-kecil text-success">Pemasukan</div>
+          <div class="angka-besar text-success" id="valMasuk">Rp 0</div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="info-box">
+          <div class="label-kecil text-danger">Pengeluaran</div>
+          <div class="angka-besar text-danger" id="valKeluar">Rp 0</div>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="info-box py-2 bg-white border">
+          <div class="d-flex justify-content-between align-items-center px-2">
+            <span class="small text-muted">Surplus/Defisit Periode Ini:</span>
+            <span class="fw-bold" id="valSelisih">Rp 0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ringkasan Inventaris (Barang Masuk) - BARU -->
+    <div class="card border-0 shadow-sm mb-4 bg-barang">
+      <div class="card-body p-2 d-flex justify-content-between align-items-center">
+         <div class="d-flex align-items-center">
+            <div class="bg-white rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="width:40px; height:40px">
+                <i class="fas fa-box text-info"></i>
+            </div>
+            <div>
+                <div class="label-kecil text-info fw-bold" style="color:#00838f;">Aset / Barang Masuk</div>
+                <div class="small text-muted" style="font-size:0.7rem;">Periode Ini</div>
+            </div>
+         </div>
+         <div class="fs-4 fw-bold text-dark" id="valBarang">0 Item</div>
+      </div>
+    </div>
+
+    <!-- Riwayat List -->
+    <h6 class="fw-bold mb-2 ps-1 border-start border-4 border-success">&nbsp; Rincian Transaksi</h6>
+    <div id="listRiwayat">
+      <!-- Data injected by JS -->
+    </div>
+    
+    <div class="text-center mt-4 mb-5 text-muted small">
+      &copy; 2026 Musholla Nurul Islam <br>
+      Develop by <a href="https://wa.me/6285233273172" target="_blank" class="text-decoration-none fw-bold text-success">Nailul Authar</a>
+    </div>
+  </div>
+
+  <!-- Admin Panel (Floating) -->
+  <div id="adminSection">
+    <div class="d-flex justify-content-between mb-3">
+      <h6 class="fw-bold text-success"><i class="fas fa-book-open"></i> Menu Bendahara</h6>
+      <button class="btn btn-sm btn-close" onclick="toggleAdmin()"></button>
+    </div>
+    
+    <!-- STEP 1: FORM LOGIN -->
+    <div id="loginStep">
+      <div class="text-center mb-4 mt-3">
+        <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow-sm" style="width: 70px; height: 70px;">
+          <i class="fas fa-user-shield text-success fs-2"></i>
+        </div>
+        <h6 class="fw-bold text-dark">Login Petugas</h6>
+        <p class="small text-muted mb-0">Masukkan kredensial & token akses.</p>
+      </div>
+
+      <div class="mb-3">
+        <label class="small fw-bold text-muted">Username</label>
+        <div class="input-group">
+          <span class="input-group-text bg-light border-end-0"><i class="fas fa-user text-muted"></i></span>
+          <input type="text" id="loginUser" class="form-control border-start-0 ps-0" placeholder="Username">
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="small fw-bold text-muted">Password</label>
+        <div class="input-group">
+          <span class="input-group-text bg-light border-end-0"><i class="fas fa-key text-muted"></i></span>
+          <input type="password" id="loginPass" class="form-control border-start-0 ps-0" placeholder="Password">
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="small fw-bold text-muted">Token Validasi</label>
+        <div class="input-group">
+          <span class="input-group-text bg-light border-end-0"><i class="fas fa-qrcode text-muted"></i></span>
+          <input type="text" id="loginToken" class="form-control border-start-0 ps-0" placeholder="Token" style="text-transform: uppercase;">
+        </div>
+      </div>
+      
+      <div class="mb-3 form-check">
+        <input type="checkbox" class="form-check-input" id="checkRemember">
+        <label class="form-check-label small text-muted" for="checkRemember">Ingat saya di browser ini</label>
+      </div>
+      
+      <button class="btn btn-success w-100 fw-bold shadow-sm py-2" onclick="prosesLogin()">
+        MASUK <i class="fas fa-arrow-right ms-2"></i>
+      </button>
+    </div>
+
+    <!-- STEP 2: DASHBOARD UTAMA (Muncul Setelah Login) -->
+    <div id="inputStep" style="display:none;">
+      
+      <!-- Info Login User Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4 bg-light p-3 rounded-3 border">
+        <div class="d-flex align-items-center">
+            <div class="bg-success text-white rounded-circle me-3 d-flex align-items-center justify-content-center shadow-sm" style="width:40px; height:40px">
+                <i class="fas fa-user"></i>
+            </div>
+            <div>
+                <div class="fw-bold text-dark lh-1" id="displayUser">Bendahara</div>
+                <div class="small text-muted mt-1" style="font-size: 0.75rem;">Akses Penuh</div>
+            </div>
+        </div>
+        <button class="btn btn-sm btn-outline-danger" onclick="prosesLogout()" title="Logout">
+          <i class="fas fa-power-off"></i>
+        </button>
+      </div>
+
+      <!-- A. MENU GRID UTAMA -->
+      <div id="dashMenu">
+         <div class="text-center mb-2">
+            <p class="small text-muted mb-0">Silakan pilih menu operasional:</p>
+         </div>
+         <div class="dashboard-grid">
+            <!-- Menu 1: Profil -->
+            <div class="menu-item" onclick="openSubMenu('menuProfil')">
+               <i class="fas fa-id-badge text-primary"></i>
+               <span>Profil<br>Petugas</span>
+            </div>
+            <!-- Menu 2: Data Donatur (BARU) -->
+            <div class="menu-item" onclick="openSubMenu('menuDonatur')">
+               <i class="fas fa-users text-info"></i>
+               <span>Data<br>Donatur</span>
+            </div>
+            <!-- Menu 3: Input Transaksi -->
+            <div class="menu-item" onclick="openSubMenu('menuInput')">
+               <i class="fas fa-edit text-success"></i>
+               <span>Input<br>Transaksi</span>
+            </div>
+            <!-- Menu 4: Kas Awal -->
+            <div class="menu-item" onclick="openSubMenu('menuKasAwal')">
+               <i class="fas fa-wallet text-warning"></i>
+               <span>Input<br>Kas Awal</span>
+            </div>
+            <!-- Menu 5: Rekap & Cetak -->
+            <div class="menu-item" onclick="openSubMenu('menuCetak')">
+               <i class="fas fa-print text-danger"></i>
+               <span>Rekap &<br>Cetak</span>
+            </div>
+         </div>
+      </div>
+
+      <!-- B. SUB-MENU SECTIONS (Tersembunyi Awalnya) -->
+      
+      <!-- 1. VIEW PROFIL -->
+      <div id="menuProfil" class="sub-menu d-none">
+         <div class="nav-breadcrumb" onclick="backToDash()"><i class="fas fa-arrow-left me-2"></i> Kembali ke Menu</div>
+         <div class="card border-0 shadow-sm text-center p-4">
+             <div class="mx-auto bg-light rounded-circle d-flex align-items-center justify-content-center mb-3" style="width:80px;height:80px">
+                <i class="fas fa-user-tie text-secondary fs-1"></i>
+             </div>
+             <h5 class="fw-bold">Bendahara 101</h5>
+             <p class="text-muted small mb-3">ID Petugas: MNI-BND-01</p>
+             <hr>
+             <div class="text-start small px-2">
+                <div class="row mb-2">
+                    <div class="col-5 text-muted">Jabatan</div>
+                    <div class="col-7 fw-bold">Ketua Bendahara</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-5 text-muted">Status</div>
+                    <div class="col-7 fw-bold text-success"><i class="fas fa-check-circle me-1"></i> Aktif</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-5 text-muted">Last Login</div>
+                    <div class="col-7 text-dark" id="lastLoginTime">-</div>
+                </div>
+             </div>
+         </div>
+      </div>
+
+      <!-- 2. VIEW DATA DONATUR (BARU) -->
+      <div id="menuDonatur" class="sub-menu d-none">
+          <div class="nav-breadcrumb" onclick="backToDash()"><i class="fas fa-arrow-left me-2"></i> Kembali ke Menu</div>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="fw-bold text-info mb-0"><i class="fas fa-users me-2"></i>Daftar Donatur</h6>
+              <button class="btn btn-sm btn-info text-white rounded-pill px-3" onclick="toggleFormDonatur()">
+                  <i class="fas fa-plus me-1"></i> Tambah
+              </button>
+          </div>
+
+          <!-- Form Tambah Donatur (Toggle) -->
+          <div id="formTambahDonatur" class="card bg-light border-0 p-3 mb-3 d-none">
+              <h6 class="small fw-bold text-muted mb-2">Input Donatur Baru</h6>
+              <form onsubmit="simpanDonatur(event)">
+                  <div class="mb-2">
+                      <input type="text" id="namaDonatur" class="form-control form-control-sm" placeholder="Nama Lengkap (Contoh: H. Ahmad)" required>
+                  </div>
+                  <div class="mb-2">
+                      <input type="tel" id="hpDonatur" class="form-control form-control-sm" placeholder="No. HP / WA">
+                  </div>
+                  <div class="mb-2">
+                      <textarea id="alamatDonatur" class="form-control form-control-sm" rows="2" placeholder="Alamat Lengkap"></textarea>
+                  </div>
+                  <div class="mb-2">
+                      <input type="text" id="catatanDonatur" class="form-control form-control-sm" placeholder="Catatan Tambahan (Opsional)">
+                  </div>
+                  <div class="d-flex gap-2">
+                      <button type="submit" class="btn btn-primary btn-sm w-100">Simpan</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm w-100" onclick="toggleFormDonatur()">Batal</button>
+                  </div>
+              </form>
+          </div>
+
+          <!-- List Donatur -->
+          <div id="listDonaturContainer">
+              <div class="text-center mt-3">
+                 <div class="spinner-border text-info spinner-border-sm" role="status"></div>
+                 <div class="small text-muted">Mengambil data...</div>
+              </div>
+          </div>
+      </div>
+
+      <!-- 3. VIEW INPUT TRANSAKSI (UPDATED: Switch Barang/Uang) -->
+      <div id="menuInput" class="sub-menu d-none">
+        <div class="nav-breadcrumb" onclick="backToDash()"><i class="fas fa-arrow-left me-2"></i> Kembali ke Menu</div>
+        
+        <form id="formKeuangan" onsubmit="handleForm(this)">
+            <!-- Hidden Inputs -->
+            <input type="hidden" name="username" id="hiddenUser">
+            <input type="hidden" name="password" id="hiddenPass">
+            <input type="hidden" name="token" id="hiddenToken">
+
+            <div class="d-flex justify-content-between align-items-center mb-2 ps-1 border-start border-3 border-secondary">
+                <h6 class="fw-bold text-secondary small mb-0">&nbsp; Input Transaksi</h6>
+                <!-- Switch Mode Barang -->
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="switchBarang" onchange="toggleModeInput()">
+                    <label class="form-check-label small text-muted fw-bold" for="switchBarang">Mode Barang</label>
+                </div>
+            </div>
+            
+            <div class="row g-2 mb-2">
+              <div class="col-5">
+                <label class="small text-muted">Tanggal</label>
+                <input type="date" class="form-control form-control-sm" name="tanggal" id="inputTanggal" required>
+              </div>
+              <div class="col-7">
+                <label class="small text-muted">Kategori Pos</label>
+                <select class="form-select form-select-sm" name="kategori" id="selectKategori" onchange="cekOpsiKategori(this.value)" required>
+                    <option value="" disabled selected>Pilih Kategori...</option>
+                    <!-- Kategori akan di-inject oleh JavaScript -->
+                </select>
+              </div>
+            </div>
+
+            <!-- AREA KATEGORI CUSTOM -->
+            <div id="areaKategoriLain" class="d-none mb-2">
+                <label class="small text-primary fw-bold">Nama Kategori Baru</label>
+                <input type="text" class="form-control form-control-sm border-primary" id="inputKategoriLain" placeholder="Tulis nama kategori (misal: ZIS Ramadhan 2026)">
+            </div>
+
+            <!-- AREA PILIH DONATUR -->
+            <div id="areaDonatur" class="d-none mb-2 p-2 bg-light border rounded">
+                <label class="small text-muted mb-1 d-flex justify-content-between">
+                    <span>Pilih Donatur</span>
+                    <a href="#" onclick="openSubMenu('menuDonatur')" class="text-decoration-none fw-bold text-info" style="font-size: 0.7rem;">+ Data Baru</a>
+                </label>
+                <select class="form-select form-select-sm border-info" name="donatur_id" id="inputDonatur">
+                    <option value="Hamba Allah">Hamba Allah (Anonim)</option>
+                    <!-- Opsi Donatur akan dimuat via JS -->
+                </select>
+            </div>
+            
+            <!-- FORM KHUSUS BARANG (Hidden by default) -->
+            <div id="inputSectionBarang" class="d-none bg-light p-2 rounded border mb-2">
+                <div class="mb-2">
+                    <label class="small text-muted fw-bold">Nama Barang / Logistik</label>
+                    <input type="text" class="form-control form-control-sm" id="inputNamaBarang" placeholder="Contoh: Air Mineral, Nasi Kotak">
+                </div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label class="small text-muted">Jumlah / Satuan</label>
+                        <input type="text" class="form-control form-control-sm" id="inputJmlBarang" placeholder="5 Dus">
+                    </div>
+                    <div class="col-6">
+                        <label class="small text-muted">Estimasi Nilai (Opsional)</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-white text-muted border-end-0">Rp</span>
+                            <input type="number" class="form-control form-control-sm border-start-0" id="inputEstHarga" placeholder="0">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-text small fst-italic" style="font-size: 0.7rem;">*Estimasi nilai akan dicatat sebagai Pemasukan Non-Tunai.</div>
+            </div>
+
+            <div class="mb-2">
+              <label class="small text-muted">Uraian / Keterangan</label>
+              <textarea class="form-control form-control-sm" name="keterangan" rows="2" placeholder="Contoh: Sumbangan untuk acara pengajian..." required></textarea>
+            </div>
+
+            <!-- AREA UPLOAD FOTO -->
+            <div class="mb-2">
+                <label class="small text-muted">Upload Bukti / Nota (Opsional)</label>
+                <input type="file" class="form-control form-control-sm" id="inputBukti" accept="image/jpeg, image/png">
+                <div class="form-text" style="font-size: 0.7rem;">Maksimal 2MB.</div>
+            </div>
+            
+            <!-- FORM DEBET/KREDIT (UANG) -->
+            <div id="inputSectionUang">
+                <div class="row g-2 mb-3">
+                  <div class="col-6">
+                    <label class="small fw-bold text-success">DEBET (Masuk)</label>
+                    <div class="input-group input-group-sm">
+                      <span class="input-group-text bg-success text-white border-success">Rp</span>
+                      <input type="number" class="form-control input-debet fw-bold" id="inputDebet" name="debet" placeholder="0" oninput="cekPosisi('debet')">
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <label class="small fw-bold text-danger">KREDIT (Keluar)</label>
+                    <div class="input-group input-group-sm">
+                      <span class="input-group-text bg-danger text-white border-danger">Rp</span>
+                      <input type="number" class="form-control input-kredit fw-bold" id="inputKredit" name="kredit" placeholder="0" oninput="cekPosisi('kredit')">
+                    </div>
+                  </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-sm w-100 py-2 fw-bold shadow-sm" id="btnSimpan">
+              <i class="fas fa-paper-plane me-1"></i> POSTING JURNAL
+            </button>
+        </form>
+      </div>
+
+      <!-- 4. VIEW KAS AWAL -->
+      <div id="menuKasAwal" class="sub-menu d-none">
+        <div class="nav-breadcrumb" onclick="backToDash()"><i class="fas fa-arrow-left me-2"></i> Kembali ke Menu</div>
+        <div class="card border-0 shadow-sm p-3">
+            <h6 class="fw-bold text-warning mb-3"><i class="fas fa-coins me-2"></i>Setup Saldo Awal</h6>
+            <div class="alert alert-warning small py-2">
+                <i class="fas fa-info-circle me-1"></i> Gunakan ini hanya untuk inisialisasi saldo awal tahun atau awal periode pembukuan.
+            </div>
+            <form onsubmit="event.preventDefault(); alert('Saldo awal berhasil diset!'); backToDash();">
+                <div class="mb-3">
+                    <label class="small text-muted">Tanggal Saldo</label>
+                    <input type="date" class="form-control" value="2024-01-01">
+                </div>
+                <div class="mb-3">
+                    <label class="small text-muted">Nominal Saldo (Rp)</label>
+                    <input type="number" class="form-control fw-bold" placeholder="Contoh: 5000000">
+                </div>
+                <button class="btn btn-warning w-100 text-white fw-bold">SIMPAN SALDO AWAL</button>
+            </form>
+        </div>
+      </div>
+
+      <!-- 5. VIEW REKAP & CETAK (DIUPDATE) -->
+      <div id="menuCetak" class="sub-menu d-none">
+        <div class="nav-breadcrumb" onclick="backToDash()"><i class="fas fa-arrow-left me-2"></i> Kembali ke Menu</div>
+        <div class="card border-0 shadow-sm p-3">
+            <h6 class="fw-bold text-dark mb-3"><i class="fas fa-file-invoice-dollar me-2"></i>Pusat Laporan</h6>
+            
+            <!-- TABS LAPORAN -->
+            <ul class="nav nav-tabs nav-fill small mb-3" id="tabLaporan" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active fw-bold" id="tab-keuangan" onclick="switchReportTab('keuangan')" type="button">Keuangan</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-bold" id="tab-inventaris" onclick="switchReportTab('inventaris')" type="button">Inventaris</button>
+                </li>
+            </ul>
+
+            <!-- CONTENT KEUANGAN -->
+            <div id="viewKeuangan">
+                <div class="mb-3">
+                    <label class="small text-muted fw-bold">Jenis Laporan</label>
+                    <select class="form-select form-select-sm mb-2" id="reportType" onchange="updateReportForm()">
+                        <option value="bulanan">Laporan Umum - Per Bulan</option>
+                        <option value="tahunan">Laporan Umum - Per Tahun</option>
+                        <option value="kategori_bulan">Detail Kategori - Per Bulan</option>
+                        <option value="kategori_tahun">Detail Kategori - Per Tahun</option>
+                        <option value="donatur">Riwayat Donatur (Per Tahun)</option>
+                    </select>
+                </div>
+
+                <div id="reportFilters" class="bg-light p-2 rounded mb-3 border">
+                    
+                    <!-- Filter Bulan (Combo Box) -->
+                    <div id="filterBulan" class="mb-2">
+                        <label class="small text-muted">Pilih Periode</label>
+                        <div class="input-group input-group-sm">
+                            <select id="rpt_bln" class="form-select">
+                               <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
+                               <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
+                               <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
+                               <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+                            </select>
+                            <select id="rpt_thn_bln" class="form-select" style="max-width: 80px;">
+                               <!-- Diisi JS -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Filter Tahun Saja -->
+                    <div id="filterTahun" class="mb-2 d-none">
+                        <label class="small text-muted">Pilih Tahun</label>
+                        <select id="rpt_thn_only" class="form-select form-select-sm">
+                            <!-- Diisi JS -->
+                        </select>
+                    </div>
+
+                    <!-- Filter Kategori -->
+                    <div id="filterKategori" class="mb-2 d-none">
+                        <label class="small text-muted">Pilih Kategori</label>
+                        <select id="rpt_kategori" class="form-select form-select-sm">
+                            <!-- Diisi JS dari data kategori -->
+                        </select>
+                    </div>
+
+                    <!-- Filter Donatur -->
+                    <div id="filterDonatur" class="mb-2 d-none">
+                        <label class="small text-muted">Pilih Donatur</label>
+                        <select id="rpt_donatur" class="form-select form-select-sm">
+                            <!-- Diisi JS dari data donatur -->
+                        </select>
+                    </div>
+                    
+                    <button class="btn btn-secondary btn-sm w-100 mt-2" onclick="generateReportPreview()">
+                        <i class="fas fa-sync me-1"></i> Tampilkan Preview
+                    </button>
+                </div>
+            </div>
+
+            <!-- CONTENT INVENTARIS -->
+            <div id="viewInventaris" class="d-none">
+                <div class="bg-light p-2 rounded mb-3 border">
+                    <label class="small text-muted fw-bold mb-2">Laporan Barang Masuk</label>
+                    <label class="small text-muted">Pilih Tahun</label>
+                    <select id="rpt_inv_thn" class="form-select form-select-sm mb-2">
+                        <!-- Populated by JS -->
+                    </select>
+                    <button class="btn btn-info text-white btn-sm w-100" onclick="generateInventoryPreview()">
+                        <i class="fas fa-box-open me-1"></i> Cek Aset Barang
+                    </button>
+                </div>
+            </div>
+
+            <!-- Area Preview (Shared) -->
+            <div id="reportPreviewArea" class="border rounded p-2 mb-3 bg-white" style="min-height: 80px;">
+                <p class="text-center text-muted small my-3"><em>Silakan atur filter dan klik 'Tampilkan Preview'</em></p>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button class="btn btn-dark" onclick="alert('Mendownload Laporan PDF sesuai filter...')">
+                    <i class="fas fa-file-pdf me-2"></i> Download PDF
+                </button>
+                <button class="btn btn-outline-dark" onclick="window.print()">
+                    <i class="fas fa-print me-2"></i> Cetak
+                </button>
+            </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Tombol Fab -->
+  <div class="fab" onclick="toggleAdmin()">
+    <i class="fas fa-user-cog"></i>
+  </div>
+
+  <script>
+    // --- KONFIGURASI TANGGAL ---
+    const today = new Date();
+    const curMonth = today.getMonth() + 1; // 1-12
+    const curYear = today.getFullYear();
+    const curDateStr = today.toISOString().split('T')[0];
+    
+    // Variabel Global
+    let globalDonaturs = [];
+
+    // Daftar Kategori Standar (Bawaan)
+    const kategoriBawaan = [
+      { nama: "Infaq Jumat", grup: "Pemasukan" },
+      { nama: "Infaq Pembangunan", grup: "Pemasukan" },
+      { nama: "Donasi Tetap", grup: "Pemasukan" },
+      { nama: "Wakaf Tunai", grup: "Pemasukan" },
+      { nama: "Sumbangan Lainnya", grup: "Pemasukan" },
+      { nama: "Operasional Listrik & Air", grup: "Pengeluaran" },
+      { nama: "Honorarium Marbot", grup: "Pengeluaran" },
+      { nama: "Perlengkapan Kebersihan", grup: "Pengeluaran" },
+      { nama: "Konsumsi Kegiatan", grup: "Pengeluaran" },
+      { nama: "Pemeliharaan Bangunan", grup: "Pengeluaran" }
+    ];
+
+    // Setup Awal
+    window.onload = function() {
+      document.getElementById('inputTanggal').value = curDateStr;
+      
+      const savedUser = localStorage.getItem('mk_user');
+      const savedPass = localStorage.getItem('mk_pass');
+      const savedToken = localStorage.getItem('mk_token');
+      
+      if(savedUser && savedPass && savedToken) {
+          document.getElementById('loginUser').value = savedUser;
+          document.getElementById('loginPass').value = savedPass;
+          document.getElementById('loginToken').value = savedToken;
+          document.getElementById('checkRemember').checked = true;
+      }
+      
+      initReportDropdowns(); // Init dropdown tahun untuk laporan
+      updateFilterUI(); 
+      applyFilter(); 
+      loadDonaturs();
+      loadKategoriServer(); // Load Kategori Dinamis
+    };
+
+    // --- LOGIKA TICKER / RUNNING TEXT (BARU) ---
+    function updateTicker(riwayat) {
+      const container = document.getElementById('newsTickerContent');
+      let html = '';
+      
+      // Ambil 5 pemasukan terakhir
+      const incomeList = riwayat.filter(x => x.tipe === 'masuk').slice(0, 5);
+
+      if(incomeList.length === 0) {
+         html = '<div class="ticker-item">Selamat Datang di Aplikasi Keuangan Musholla Nurul Islam</div>';
+      } else {
+         incomeList.forEach(item => {
+            // Coba ekstrak nama donatur
+            let name = "Hamba Allah";
+            // Cek pattern (Donatur: Nama)
+            const match = item.ket.match(/\(Donatur: (.*?)\)/);
+            if(match) {
+               name = match[1];
+            } else if (item.ket.toLowerCase().includes("hamba allah")) {
+               name = "Hamba Allah";
+            }
+
+            // Cek apakah barang atau uang
+            let val = "";
+            let displayItem = ""; // Apa yang didonasikan
+            
+            if(item.ket.includes('[BARANG]')) {
+               // Parse format: [BARANG] Nama (Jml) - ...
+               // Kita ambil saja deskripsi barangnya dari ket
+               let cleanKet = item.ket.replace('[BARANG]', '').trim();
+               // Coba ambil sebelum tanda "-" jika ada
+               if(cleanKet.includes('-')) {
+                   displayItem = cleanKet.split('-')[0].trim();
+               } else {
+                   displayItem = cleanKet;
+               }
+               val = "Aset Barang"; 
+            } else {
+               val = formatRupiah(item.nominal);
+               displayItem = "Infaq/Shodaqoh";
+            }
+
+            html += `<div class="ticker-item"><i class="fas fa-heart"></i> Terima Kasih <b>${name}</b> atas ${displayItem} (${val}) - ${item.tanggal} &nbsp;&nbsp;&nbsp;&bull;&nbsp;&nbsp;&nbsp;</div>`;
+         });
+      }
+      container.innerHTML = html;
+    }
+
+    // --- LOGIKA LAPORAN DINAMIS ---
+    
+    function initReportDropdowns() {
+        // Isi dropdown tahun di menu Laporan (3 tahun ke belakang)
+        const sel1 = document.getElementById('rpt_thn_bln');
+        const sel2 = document.getElementById('rpt_thn_only');
+        let html = '';
+        for(let i=0; i<3; i++) {
+            html += `<option value="${curYear-i}">${curYear-i}</option>`;
+        }
+        sel1.innerHTML = html;
+        sel2.innerHTML = html;
+        
+        // Set Bulan saat ini
+        document.getElementById('rpt_bln').value = curMonth;
+    }
+
+    // FUNGSI SWITCH TAB LAPORAN
+    function switchReportTab(tab) {
+        // Reset UI Active State
+        document.getElementById('tab-keuangan').classList.remove('active', 'text-success');
+        document.getElementById('tab-inventaris').classList.remove('active', 'text-info');
+        document.getElementById('viewKeuangan').classList.add('d-none');
+        document.getElementById('viewInventaris').classList.add('d-none');
+        
+        // Reset Preview Area
+        document.getElementById('reportPreviewArea').innerHTML = '<p class="text-center text-muted small my-3"><em>Silakan atur filter dan klik tombol...</em></p>';
+
+        if(tab === 'keuangan') {
+            document.getElementById('tab-keuangan').classList.add('active', 'text-success');
+            document.getElementById('viewKeuangan').classList.remove('d-none');
+        } else {
+            document.getElementById('tab-inventaris').classList.add('active', 'text-info');
+            document.getElementById('viewInventaris').classList.remove('d-none');
+            
+            // Init Inventory Year Dropdown jika kosong
+            if(document.getElementById('rpt_inv_thn').children.length === 0) {
+                 const sel = document.getElementById('rpt_inv_thn');
+                 let html = '';
+                 for(let i=0; i<3; i++) html += `<option value="${curYear-i}">${curYear-i}</option>`;
+                 sel.innerHTML = html;
+            }
+        }
+    }
+
+    function updateReportForm() {
+        const type = document.getElementById('reportType').value;
+        const fBulan = document.getElementById('filterBulan');
+        const fTahun = document.getElementById('filterTahun');
+        const fKategori = document.getElementById('filterKategori');
+        const fDonatur = document.getElementById('filterDonatur');
+        
+        // Reset all to hide
+        fBulan.classList.add('d-none');
+        fTahun.classList.add('d-none');
+        fKategori.classList.add('d-none');
+        fDonatur.classList.add('d-none');
+
+        if(type === 'bulanan') {
+            fBulan.classList.remove('d-none');
+        } else if(type === 'tahunan') {
+            fTahun.classList.remove('d-none');
+        } else if(type === 'kategori_bulan') {
+            fKategori.classList.remove('d-none');
+            fBulan.classList.remove('d-none');
+            // Populate kategori dropdown if empty
+            if(document.getElementById('rpt_kategori').children.length === 0) populateReportCategories();
+        } else if(type === 'kategori_tahun') {
+            fKategori.classList.remove('d-none');
+            fTahun.classList.remove('d-none');
+            if(document.getElementById('rpt_kategori').children.length === 0) populateReportCategories();
+        } else if(type === 'donatur') {
+            fDonatur.classList.remove('d-none');
+            fTahun.classList.remove('d-none'); // Filter tahunan untuk donatur
+            // Populate donatur dropdown
+            populateReportDonaturs();
+        }
+    }
+
+    function populateReportCategories() {
+        const select = document.getElementById('rpt_kategori');
+        // Ambil opsi dari dropdown input utama yang sudah diload
+        const mainSelect = document.getElementById('selectKategori');
+        select.innerHTML = mainSelect.innerHTML;
+        // Hapus opsi "Pilih Kategori" dan "Lainnya"
+        if(select.options.length > 0) select.remove(0);
+        // Hapus opsi terakhir (Lainnya) jika perlu, tapi biarkan dulu
+    }
+
+    function populateReportDonaturs() {
+        const select = document.getElementById('rpt_donatur');
+        // Ambil dari input donatur utama
+        const mainSelect = document.getElementById('inputDonatur');
+        select.innerHTML = mainSelect.innerHTML;
+    }
+
+    function generateReportPreview() {
+        const type = document.getElementById('reportType').value;
+        const area = document.getElementById('reportPreviewArea');
+        
+        // Simulasi Preview (Karena backend belum support filter kompleks ini)
+        let html = '<div class="small">';
+        
+        if(type === 'bulanan') {
+            const bln = document.getElementById('rpt_bln').options[document.getElementById('rpt_bln').selectedIndex].text;
+            const thn = document.getElementById('rpt_thn_bln').value;
+            html += `<strong class="d-block mb-2 text-primary">Laporan Bulan ${bln} ${thn}</strong>`;
+            html += `<div>Total Masuk: Rp 1.500.000</div><div>Total Keluar: Rp 200.000</div><div class="border-top fw-bold mt-1">Saldo: Rp 1.300.000</div>`;
+        } else if(type === 'donatur') {
+            const donatur = document.getElementById('rpt_donatur').value;
+            const thn = document.getElementById('rpt_thn_only').value;
+            html += `<strong class="d-block mb-2 text-info">Riwayat Donasi: ${donatur} (${thn})</strong>`;
+            html += `<table class="table table-sm table-striped" style="font-size:0.75rem">
+                <thead><tr><th>Tgl</th><th>Ket</th><th>Jml</th></tr></thead>
+                <tbody>
+                    <tr><td>01/01</td><td>Infaq Awal Tahun</td><td>500.000</td></tr>
+                    <tr><td>15/03</td><td>Sumbangan Semen</td><td>250.000</td></tr>
+                </tbody>
+            </table>`;
+            html += `<div class="text-end fw-bold">Total: Rp 750.000</div>`;
+        } else if(type.includes('kategori')) {
+            const kat = document.getElementById('rpt_kategori').value;
+            html += `<strong class="d-block mb-2 text-success">Detail Kategori: ${kat}</strong>`;
+            html += `<div class="text-muted fst-italic">Menampilkan transaksi khusus kategori ini...</div>`;
+            html += `<div class="mt-2 fw-bold">Subtotal: Rp 2.000.000</div>`;
+        }
+        
+        html += '</div>';
+        area.innerHTML = html;
+    }
+
+    // PREVIEW KHUSUS INVENTARIS
+    function generateInventoryPreview() {
+        const thn = document.getElementById('rpt_inv_thn').value;
+        const area = document.getElementById('reportPreviewArea');
+        
+        let html = `<strong class="d-block mb-2 text-info">Laporan Aset & Inventaris (${thn})</strong>`;
+        html += `<table class="table table-sm table-bordered small">
+            <thead class="table-light"><tr><th>Tgl</th><th>Barang</th><th>Qty</th></tr></thead>
+            <tbody>
+                <tr><td>12/01</td><td>Semen Tiga Roda</td><td>10 Sak</td></tr>
+                <tr><td>05/03</td><td>Air Mineral Gelas</td><td>5 Dus</td></tr>
+                <tr><td>20/06</td><td>Karpet Sajadah</td><td>2 Roll</td></tr>
+            </tbody>
+        </table>`;
+        html += `<div class="text-end small text-muted">Total Aset Masuk: 3 Item</div>`;
+        area.innerHTML = html;
+    }
+
+
+    // --- LOGIKA KATEGORI DINAMIS ---
+    function loadKategoriServer() {
+      if (typeof google === 'undefined' || typeof google.script === 'undefined') {
+        renderKategoriDropdown([]); // Render bawaan saja jika offline
+        return;
+      }
+      
+      google.script.run.withSuccessHandler(function(data){
+         renderKategoriDropdown(data);
+      }).getRiwayatKategori();
+    }
+
+    function renderKategoriDropdown(riwayatKats) {
+      const select = document.getElementById('selectKategori');
+      select.innerHTML = '<option value="" disabled selected>Pilih Kategori...</option>';
+      
+      // 1. Render Grup Pemasukan (Standar)
+      let htmlMasuk = '<optgroup label="Pemasukan (Standar)">';
+      kategoriBawaan.filter(k => k.grup === 'Pemasukan').forEach(k => {
+         htmlMasuk += `<option value="${k.nama}">${k.nama}</option>`;
+      });
+      htmlMasuk += '</optgroup>';
+      
+      // 2. Render Grup Pengeluaran (Standar)
+      let htmlKeluar = '<optgroup label="Pengeluaran (Standar)">';
+      kategoriBawaan.filter(k => k.grup === 'Pengeluaran').forEach(k => {
+         htmlKeluar += `<option value="${k.nama}">${k.nama}</option>`;
+      });
+      htmlKeluar += '</optgroup>';
+      
+      // 3. Render Grup Tambahan (Dari Riwayat)
+      // Filter kategori riwayat yang BELUM ada di bawaan
+      let tambahanMasuk = '';
+      let tambahanKeluar = '';
+      
+      riwayatKats.forEach(k => {
+         // Cek apakah sudah ada di bawaan?
+         const isExist = kategoriBawaan.some(b => b.nama === k.nama);
+         if(!isExist) {
+            if(k.jenis === 'masuk') {
+               tambahanMasuk += `<option value="${k.nama}">${k.nama}</option>`;
+            } else {
+               tambahanKeluar += `<option value="${k.nama}">${k.nama}</option>`;
+            }
+         }
+      });
+      
+      let htmlTambahan = '';
+      if(tambahanMasuk || tambahanKeluar) {
+         htmlTambahan = '<optgroup label="--- Kategori Tambahan (Riwayat) ---">';
+         htmlTambahan += tambahanMasuk;
+         htmlTambahan += tambahanKeluar;
+         htmlTambahan += '</optgroup>';
+      }
+
+      // Gabungkan
+      select.innerHTML += htmlMasuk + htmlKeluar + htmlTambahan;
+      
+      // Opsi Lainnya Selalu Paling Bawah
+      select.innerHTML += '<option value="Lainnya" class="fw-bold text-primary">-- Lainnya (Buat Baru) --</option>';
+    }
+
+    // --- LOGIKA DATA DONATUR ---
+    function loadDonaturs() {
+      if (typeof google === 'undefined' || typeof google.script === 'undefined') {
+         globalDonaturs = [{id: 1, nama: "H. Abdullah (Offline)", hp: "081", alamat: "Jl. Mawar No 1", catatan: "Donatur tetap"}];
+         renderListDonatur(globalDonaturs);
+         return;
+      }
+      
+      google.script.run.withSuccessHandler(function(data){
+         globalDonaturs = data;
+         renderListDonatur(data);
+         updateDropdownDonatur(data);
+      }).getDonaturs();
+    }
+
+    function renderListDonatur(data) {
+        const container = document.getElementById('listDonaturContainer');
+        if(!data || data.length === 0) {
+            container.innerHTML = '<div class="text-center text-muted small py-3">Belum ada data donatur.</div>';
+            return;
+        }
+
+        let html = '';
+        data.forEach(d => {
+            let inisial = d.nama.charAt(0).toUpperCase();
+            html += `
+            <div class="donatur-item justify-content-between align-items-start">
+                <div class="d-flex">
+                    <div class="avatar-char mt-1">${inisial}</div>
+                    <div>
+                        <div class="fw-bold small text-dark">${d.nama}</div>
+                        <div class="text-muted" style="font-size:0.7rem">
+                            <i class="fas fa-phone me-1"></i> ${d.hp || '-'}
+                        </div>
+                        ${d.alamat ? `<div class="text-muted" style="font-size:0.7rem"><i class="fas fa-map-marker-alt me-1"></i> ${d.alamat}</div>` : ''}
+                        ${d.catatan ? `<div class="text-info fst-italic" style="font-size:0.65rem">"${d.catatan}"</div>` : ''}
+                    </div>
+                </div>
+                <button class="btn btn-sm text-danger" onclick="hapusDonatur('${d.id}')"><i class="fas fa-trash"></i></button>
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    function updateDropdownDonatur(data) {
+        const select = document.getElementById('inputDonatur');
+        select.innerHTML = '<option value="Hamba Allah">Hamba Allah (Anonim)</option>';
+        if(data) {
+          data.forEach(d => {
+              let opt = document.createElement('option');
+              opt.value = d.nama;
+              opt.innerText = d.nama;
+              select.appendChild(opt);
+          });
+        }
+    }
+
+    function toggleFormDonatur() {
+        const form = document.getElementById('formTambahDonatur');
+        form.classList.toggle('d-none');
+    }
+
+    function simpanDonatur(e) {
+        e.preventDefault();
+        const nama = document.getElementById('namaDonatur').value;
+        const hp = document.getElementById('hpDonatur').value;
+        const alamat = document.getElementById('alamatDonatur').value;
+        const catatan = document.getElementById('catatanDonatur').value;
+        const btn = e.target.querySelector('button[type="submit"]');
+
+        if(!nama) return;
+        
+        btn.disabled = true;
+        btn.innerText = 'Menyimpan...';
+
+        const dataKirim = {
+            nama: nama, 
+            hp: hp,
+            alamat: alamat,
+            catatan: catatan
+        };
+
+        if (typeof google === 'undefined' || typeof google.script === 'undefined') {
+           alert("Mode Offline: Simpan berhasil.");
+           btn.disabled = false; btn.innerText = 'Simpan';
+           toggleFormDonatur();
+           return;
+        }
+
+        google.script.run.withSuccessHandler(function(newData){
+           globalDonaturs = newData;
+           renderListDonatur(newData);
+           updateDropdownDonatur(newData);
+           
+           document.getElementById('namaDonatur').value = '';
+           document.getElementById('hpDonatur').value = '';
+           document.getElementById('alamatDonatur').value = '';
+           document.getElementById('catatanDonatur').value = '';
+           toggleFormDonatur();
+           btn.disabled = false; btn.innerText = 'Simpan';
+           alert("Donatur Tersimpan!");
+        }).tambahDonatur(dataKirim);
+    }
+
+    function hapusDonatur(id) {
+        if(!confirm("Hapus data donatur ini dari Database?")) return;
+        
+        if (typeof google === 'undefined' || typeof google.script === 'undefined') {
+           alert("Mode Offline dihapus."); return;
+        }
+        
+        google.script.run.withSuccessHandler(function(newData){
+           globalDonaturs = newData;
+           renderListDonatur(newData);
+           updateDropdownDonatur(newData);
+        }).hapusDonaturServer(id);
+    }
+
+    // --- LOGIKA FORM INPUT (Update Kategori) ---
+    function cekOpsiKategori(val) {
+        // 1. Cek Apakah Perlu Input Donatur
+        const kategoriDonasi = ['Infaq Pembangunan', 'Donasi Tetap', 'Wakaf Tunai', 'Sumbangan Lainnya'];
+        const areaDonatur = document.getElementById('areaDonatur');
+        
+        // Cek juga kategori custom yang mungkin berbau donasi
+        if(kategoriDonasi.includes(val) || val.toLowerCase().includes('infaq') || val.toLowerCase().includes('donasi')) {
+            areaDonatur.classList.remove('d-none');
+        } else {
+            areaDonatur.classList.add('d-none');
+        }
+
+        // 2. Cek Apakah Kategori Lainnya (Custom)
+        const areaLain = document.getElementById('areaKategoriLain');
+        const inputLain = document.getElementById('inputKategoriLain');
+        
+        if(val === 'Lainnya') {
+            areaLain.classList.remove('d-none');
+            inputLain.required = true;
+            inputLain.focus();
+        } else {
+            areaLain.classList.add('d-none');
+            inputLain.required = false;
+            inputLain.value = ''; 
+        }
+    }
+
+    // --- LOGIKA INPUT MODE (Switch Barang/Tunai) ---
+    function toggleModeInput() {
+        const isBarang = document.getElementById('switchBarang').checked;
+        const sectionUang = document.getElementById('inputSectionUang');
+        const sectionBarang = document.getElementById('inputSectionBarang');
+        
+        if(isBarang) {
+            sectionUang.classList.add('d-none');
+            sectionBarang.classList.remove('d-none');
+            document.getElementById('inputNamaBarang').required = true;
+            document.getElementById('inputJmlBarang').required = true;
+        } else {
+            sectionUang.classList.remove('d-none');
+            sectionBarang.classList.add('d-none');
+            document.getElementById('inputNamaBarang').required = false;
+            document.getElementById('inputJmlBarang').required = false;
+        }
+    }
+
+    // --- LOGIKA NAVIGASI DASHBOARD ---
+    function openSubMenu(menuId) {
+        document.getElementById('dashMenu').classList.add('d-none');
+        document.querySelectorAll('.sub-menu').forEach(el => el.classList.add('d-none'));
+        document.getElementById(menuId).classList.remove('d-none');
+        
+        // Setup khusus jika membuka menu Cetak untuk pertama kali
+        if(menuId === 'menuCetak') {
+             updateReportForm(); // Ensure default visibility is correct
+             // Pastikan atribut tanggal cetak terupdate
+             document.getElementById('menuCetak').setAttribute('data-print-date', new Date().toLocaleString('id-ID'));
+        }
+    }
+
+    function backToDash() {
+        document.querySelectorAll('.sub-menu').forEach(el => el.classList.add('d-none'));
+        document.getElementById('dashMenu').classList.remove('d-none');
+    }
+
+    // --- LOGIKA LOGIN / LOGOUT UI ---
+    function prosesLogin() {
+      const u = document.getElementById('loginUser').value;
+      const p = document.getElementById('loginPass').value;
+      const t = document.getElementById('loginToken').value;
+
+      const validUser = "bendahara101";
+      const validPass = "MNI8823";
+      const validToken = "UMAT";
+
+      if(u === "" || p === "" || t === "") {
+        alert("Harap lengkapi Username, Password, dan Token!");
+        return;
+      }
+
+      if (u !== validUser || p !== validPass || t.toUpperCase() !== validToken) {
+         alert("Akses Ditolak! Kredensial atau Token salah.");
+         return;
+      }
+
+      // Simpan ke LocalStorage jika dicentang
+      const isRemember = document.getElementById('checkRemember').checked;
+      if(isRemember) {
+        localStorage.setItem('mk_user', u);
+        localStorage.setItem('mk_pass', p);
+        localStorage.setItem('mk_token', t);
+      } else {
+        localStorage.removeItem('mk_user');
+        localStorage.removeItem('mk_pass');
+        localStorage.removeItem('mk_token');
+      }
+
+      document.getElementById('hiddenUser').value = u;
+      document.getElementById('hiddenPass').value = p;
+      document.getElementById('hiddenToken').value = t;
+      document.getElementById('displayUser').innerText = u;
+      
+      document.getElementById('lastLoginTime').innerText = new Date().toLocaleString();
+
+      document.getElementById('loginStep').style.display = 'none';
+      document.getElementById('inputStep').style.display = 'block';
+      backToDash(); 
+    }
+
+    function prosesLogout() {
+      document.getElementById('hiddenUser').value = "";
+      document.getElementById('hiddenPass').value = "";
+      document.getElementById('hiddenToken').value = "";
+      
+      document.getElementById('loginUser').value = "";
+      document.getElementById('loginPass').value = "";
+      document.getElementById('loginToken').value = "";
+
+      document.getElementById('inputStep').style.display = 'none';
+      document.getElementById('loginStep').style.display = 'block';
+    }
+
+    // --- LOGIKA FORM INPUT ---
+    function cekPosisi(mode) {
+      const debet = document.getElementById('inputDebet');
+      const kredit = document.getElementById('inputKredit');
+
+      if (mode === 'debet' && debet.value !== '') {
+        kredit.value = '';
+        kredit.disabled = true;
+        kredit.placeholder = '-';
+      } else if (mode === 'kredit' && kredit.value !== '') {
+        debet.value = '';
+        debet.disabled = true;
+        debet.placeholder = '-';
+      } else {
+        debet.disabled = false;
+        kredit.disabled = false;
+        debet.placeholder = '0';
+        kredit.placeholder = '0';
+      }
+    }
+
+    function updateFilterUI() {
+      const type = document.getElementById('filterType').value;
+      const container = document.getElementById('filterInputContainer');
+      let html = '';
+
+      if(type === 'harian') {
+        html = `<input type="date" id="f_tgl" class="form-control form-control-sm" value="${curDateStr}">`;
+      } else if(type === 'bulanan') {
+        html = `
+          <div class="input-group input-group-sm">
+            <select id="f_bln" class="form-select">
+              <option value="1" ${curMonth==1?'selected':''}>Jan</option>
+              <option value="2" ${curMonth==2?'selected':''}>Feb</option>
+              <option value="3" ${curMonth==3?'selected':''}>Mar</option>
+              <option value="4" ${curMonth==4?'selected':''}>Apr</option>
+              <option value="5" ${curMonth==5?'selected':''}>Mei</option>
+              <option value="6" ${curMonth==6?'selected':''}>Jun</option>
+              <option value="7" ${curMonth==7?'selected':''}>Jul</option>
+              <option value="8" ${curMonth==8?'selected':''}>Agt</option>
+              <option value="9" ${curMonth==9?'selected':''}>Sep</option>
+              <option value="10" ${curMonth==10?'selected':''}>Okt</option>
+              <option value="11" ${curMonth==11?'selected':''}>Nov</option>
+              <option value="12" ${curMonth==12?'selected':''}>Des</option>
+            </select>
+            <select id="f_thn" class="form-select">
+              <option value="${curYear}" selected>${curYear}</option>
+              <option value="${curYear-1}">${curYear-1}</option>
+            </select>
+          </div>`;
+      } else if(type === 'tahunan') {
+        html = `<select id="f_thn_only" class="form-select form-select-sm">
+             <option value="${curYear}" selected>${curYear}</option>
+             <option value="${curYear-1}">${curYear-1}</option>
+             <option value="${curYear-2}">${curYear-2}</option>
+           </select>`;
+      } else {
+        html = `<div class="text-muted small pt-1 fst-italic">Menampilkan 20 transaksi terakhir</div>`;
+      }
+      container.innerHTML = html;
+    }
+
+    function applyFilter() {
+      document.getElementById('loading').style.display = 'flex';
+      
+      const type = document.getElementById('filterType').value;
+      let filter = { jenis: type };
+
+      if(type === 'harian') {
+        filter.tgl = document.getElementById('f_tgl').value;
+      } else if(type === 'bulanan') {
+        filter.bln = parseInt(document.getElementById('f_bln').value);
+        filter.thn = parseInt(document.getElementById('f_thn').value);
+      } else if(type === 'tahunan') {
+        filter.thn = parseInt(document.getElementById('f_thn_only').value);
+      }
+
+      if (typeof google === 'undefined' || typeof google.script === 'undefined') {
+        // Simulasi Data Dummy (Preview Mode)
+        setTimeout(() => renderData({
+          saldoTotal: 15000000,
+          masukPeriode: 2500000,
+          keluarPeriode: 500000,
+          riwayat: [
+            {tanggal: '27/10/2023', ket: 'Mode Preview (Belum Terhubung)', nominal: 500000, tipe: 'masuk'},
+            {tanggal: '25/10/2023', ket: '[BARANG] Semen (10 Sak) - Sumbangan Hamba Allah', nominal: 750000, tipe: 'masuk'}
+          ]
+        }), 800);
+      } else {
+        google.script.run
+          .withSuccessHandler(renderData)
+          .withFailureHandler((err) => {
+             alert("Koneksi Error: " + err);
+             document.getElementById('loading').style.display = 'none';
+          })
+          .getLaporanFiltered(filter);
+      }
+    }
+
+    const formatRupiah = (n) => new Intl.NumberFormat('id-ID', {style:'currency', currency:'IDR', minimumFractionDigits:0}).format(n);
+
+    function renderData(data) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('headerSaldo').innerText = "Total Saldo Kas: " + formatRupiah(data.saldoTotal);
+      document.getElementById('valMasuk').innerText = formatRupiah(data.masukPeriode);
+      document.getElementById('valKeluar').innerText = formatRupiah(data.keluarPeriode);
+      
+      const selisih = data.masukPeriode - data.keluarPeriode;
+      const elSelisih = document.getElementById('valSelisih');
+      elSelisih.innerText = formatRupiah(selisih);
+      elSelisih.className = selisih >= 0 ? "fw-bold text-success" : "fw-bold text-danger";
+
+      let html = '';
+      let countBarang = 0; // Hitung jumlah transaksi barang
+
+      if(data.riwayat.length === 0) {
+        html = '<div class="text-center text-muted py-4 small">Tidak ada transaksi pada periode ini.</div>';
+      } else {
+        data.riwayat.forEach(item => {
+          // Deteksi apakah ini transaksi barang (berdasarkan tag di keterangan)
+          const isBarang = item.ket.includes('[BARANG]');
+          if(isBarang) countBarang++;
+
+          const isMasuk = item.tipe === 'masuk';
+          
+          // Tentukan styling
+          let borderClass = isMasuk ? 'trans-masuk' : 'trans-keluar';
+          let nominalClass = isMasuk ? 'text-success' : 'text-danger';
+          let nominalText = (isMasuk ? '+' : '-') + ' ' + formatRupiah(Math.abs(item.nominal));
+          let icon = '';
+
+          // Jika barang, override styling
+          if(isBarang) {
+             borderClass = 'trans-barang';
+             nominalClass = 'text-info'; // Warna biru muda
+             nominalText = (item.nominal > 0) ? formatRupiah(item.nominal) : 'Aset Non-Tunai';
+             icon = '<i class="fas fa-box text-info me-1"></i> ';
+          }
+
+          // Bersihkan tag [BARANG] agar tampilan lebih rapi
+          const displayKet = isBarang ? item.ket.replace('[BARANG]', '').trim() : item.ket;
+
+          html += `
+            <div class="trans-item ${borderClass}">
+              <div style="width: 65%">
+                <span class="tgl-badge">${item.tanggal}</span>
+                <div class="fw-bold text-dark mt-1 text-truncate">
+                    ${icon}${displayKet}
+                </div>
+              </div>
+              <div class="text-end" style="width: 35%">
+                <div class="fw-bold ${nominalClass}" style="font-size:0.9rem">
+                  ${nominalText}
+                </div>
+              </div>
+            </div>`;
+        });
+      }
+      
+      document.getElementById('listRiwayat').innerHTML = html;
+      
+      // Update Statistik Barang
+      document.getElementById('valBarang').innerText = countBarang + " Item";
+      
+      // Update Ticker Berita Berjalan (NEW)
+      updateTicker(data.riwayat);
+    }
+
+    function toggleAdmin() {
+      const sec = document.getElementById('adminSection');
+      sec.style.display = (sec.style.display === 'block') ? 'none' : 'block';
+      if(sec.style.display === 'block') sec.scrollIntoView({behavior:'smooth'});
+    }
+
+    function handleForm(form) {
+      event.preventDefault();
+      
+      const isBarang = document.getElementById('switchBarang').checked;
+      
+      // Validasi Manual
+      let valDebet = 0;
+      let valKredit = 0;
+      let namaBrg = '';
+      let jmlBrg = '';
+      let estHarga = 0;
+
+      if (!isBarang) {
+          // Mode Uang
+          valDebet = document.getElementById('inputDebet').value;
+          valKredit = document.getElementById('inputKredit').value;
+          if (!valDebet && !valKredit) {
+            alert("Harap isi nominal pada salah satu kolom: Debet atau Kredit!");
+            return;
+          }
+      } else {
+          // Mode Barang
+          namaBrg = document.getElementById('inputNamaBarang').value.trim();
+          jmlBrg = document.getElementById('inputJmlBarang').value.trim();
+          estHarga = document.getElementById('inputEstHarga').value;
+          
+          if(!namaBrg || !jmlBrg) {
+             alert("Nama Barang dan Jumlah wajib diisi!");
+             return;
+          }
+      }
+      
+      // CEK FILE UKURAN (MAX 2MB)
+      const fileInput = document.getElementById('inputBukti');
+      if (fileInput.files.length > 0) {
+        const f = fileInput.files[0];
+        if (f.size > 2 * 1024 * 1024) { // 2MB
+             alert("Ukuran file bukti terlalu besar! Maksimal 2MB.");
+             return;
+        }
+      }
+
+      const btn = document.getElementById('btnSimpan');
+      btn.disabled = true; btn.innerText = "Memproses...";
+
+      // FUNGSI KIRIM DATA
+      const submitData = (fileData) => {
+          let finalNominal = 0;
+          let finalJenis = '';
+          let finalKeterangan = form.keterangan.value;
+
+          if (!isBarang) {
+              if (valDebet) {
+                finalNominal = parseInt(valDebet);
+                finalJenis = 'masuk';
+              } else {
+                finalNominal = parseInt(valKredit); 
+                finalJenis = 'keluar';
+              }
+          } else {
+              // Mode Barang diperlakukan sebagai Pemasukan (Asset)
+              finalJenis = 'masuk';
+              finalNominal = estHarga ? parseInt(estHarga) : 0;
+              // Gabung info barang ke keterangan dengan TAG khusus [BARANG]
+              finalKeterangan = `[BARANG] ${namaBrg} (${jmlBrg}) - ${finalKeterangan}`;
+          }
+          
+          let selectedKategori = form.kategori.value;
+          if (selectedKategori === 'Lainnya') {
+              const customKat = document.getElementById('inputKategoriLain').value.trim();
+              if(!customKat) {
+                  alert("Silakan tulis nama kategori barunya!");
+                  btn.disabled = false; btn.innerHTML = `<i class="fas fa-paper-plane me-1"></i> POSTING JURNAL`;
+                  return;
+              }
+              selectedKategori = customKat; 
+          }
+
+          let selectedDonatur = "";
+          if(!document.getElementById('areaDonatur').classList.contains('d-none')){
+              selectedDonatur = document.getElementById('inputDonatur').value;
+          }
+          
+          const formData = {
+            username: form.username.value,
+            password: form.password.value,
+            token: form.token.value,
+            tanggal: form.tanggal.value,
+            kategori: selectedKategori, 
+            keterangan: finalKeterangan + (selectedDonatur ? ` (Donatur: ${selectedDonatur})` : ''),
+            jenis: finalJenis,
+            nominal: finalNominal,
+            donatur_id: selectedDonatur,
+            file_bukti: fileData 
+          };
+
+          if (typeof google === 'undefined' || typeof google.script === 'undefined') {
+            alert(`Mode Preview: Data tersimpan.\nKet: ${finalKeterangan}\nNominal: ${finalNominal}`); 
+            resetForm();
+            return;
+          }
+
+          google.script.run.withSuccessHandler((res) => {
+            alert(res);
+            resetForm();
+          }).withFailureHandler((err) => {
+            alert("Gagal: " + err.message);
+            btn.disabled = false; btn.innerHTML = `<i class="fas fa-paper-plane me-1"></i> POSTING JURNAL`;
+          }).prosesInput(formData);
+      };
+
+      // FUNGSI RESET FORM
+      const resetForm = () => {
+        form.reset();
+        document.getElementById('inputTanggal').value = curDateStr;
+        document.getElementById('areaKategoriLain').classList.add('d-none');
+        document.getElementById('areaDonatur').classList.add('d-none');
+        
+        // Reset tampilan mode barang
+        if(isBarang) {
+            document.getElementById('switchBarang').checked = false;
+            toggleModeInput(); // Kembalikan ke mode uang
+        }
+        
+        cekPosisi('reset'); 
+        btn.disabled = false; btn.innerHTML = `<i class="fas fa-paper-plane me-1"></i> POSTING JURNAL`;
+        toggleAdmin();
+        loadKategoriServer();
+        applyFilter(); 
+        backToDash(); 
+      };
+
+      // PROSES FILE READING (Jika ada file)
+      if (fileInput.files.length > 0) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+              const result = e.target.result; 
+              const base64 = result.split(',')[1];
+              const mimeType = result.split(';')[0].split(':')[1];
+              
+              const filePayload = {
+                  data: base64,
+                  mimeType: mimeType,
+                  name: fileInput.files[0].name
+              };
+              submitData(filePayload);
+          };
+          reader.readAsDataURL(fileInput.files[0]);
+      } else {
+          submitData(null); 
+      }
+    }
+  </script>
+</body>
+</html>
