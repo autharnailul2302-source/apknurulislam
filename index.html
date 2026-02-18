@@ -569,16 +569,17 @@
             <div class="alert alert-warning small py-2">
                 <i class="fas fa-info-circle me-1"></i> Gunakan ini hanya untuk inisialisasi saldo awal tahun atau awal periode pembukuan.
             </div>
-            <form onsubmit="event.preventDefault(); alert('Saldo awal berhasil diset!'); backToDash();">
+            <!-- UPDATE: Form sekarang memanggil handleKasAwal -->
+            <form onsubmit="handleKasAwal(event)">
                 <div class="mb-3">
                     <label class="small text-muted">Tanggal Saldo</label>
-                    <input type="date" class="form-control" value="2024-01-01">
+                    <input type="date" class="form-control" id="inputTglSaldo" required>
                 </div>
                 <div class="mb-3">
                     <label class="small text-muted">Nominal Saldo (Rp)</label>
-                    <input type="number" class="form-control fw-bold" placeholder="Contoh: 5000000">
+                    <input type="number" class="form-control fw-bold" id="inputJmlSaldo" placeholder="Contoh: 5000000" required>
                 </div>
-                <button class="btn btn-warning w-100 text-white fw-bold">SIMPAN SALDO AWAL</button>
+                <button type="submit" class="btn btn-warning w-100 text-white fw-bold" id="btnSimpanSaldo">SIMPAN SALDO AWAL</button>
             </form>
         </div>
       </div>
@@ -1154,6 +1155,72 @@
             inputLain.required = false;
             inputLain.value = ''; 
         }
+    }
+
+    // --- LOGIKA KHUSUS KAS AWAL (BARU) ---
+    function handleKasAwal(e) {
+        e.preventDefault();
+        
+        const tgl = document.getElementById('inputTglSaldo').value;
+        const nominal = document.getElementById('inputJmlSaldo').value;
+        const btn = document.getElementById('btnSimpanSaldo');
+
+        if(!tgl || !nominal) {
+            alert("Harap lengkapi tanggal dan nominal saldo!");
+            return;
+        }
+
+        btn.disabled = true; 
+        btn.innerText = "Menyimpan...";
+
+        // Ambil kredensial dari hidden input form utama (karena user sudah login)
+        const u = document.getElementById('hiddenUser').value;
+        const p = document.getElementById('hiddenPass').value;
+        const t = document.getElementById('hiddenToken').value;
+
+        const formData = {
+            username: u,
+            password: p,
+            token: t,
+            tanggal: tgl,
+            kategori: "Saldo Awal",
+            keterangan: "Saldo Awal / Sisa Kas Lalu",
+            jenis: "masuk", // Saldo awal dianggap pemasukan agar menambah kas
+            nominal: parseInt(nominal),
+            donatur_id: "-", // Tidak perlu donatur spesifik
+            file_bukti: null
+        };
+
+        // Mode Preview Offline
+        if (typeof google === 'undefined' || typeof google.script === 'undefined') {
+            localTransactions.push({
+                tanggal: tgl,
+                ket: formData.keterangan,
+                nominal: parseInt(nominal),
+                tipe: 'masuk',
+                kategori: 'Saldo Awal'
+            });
+            alert("Mode Preview: Saldo Awal Berhasil Disimpan!");
+            
+            // Reset UI
+            document.getElementById('inputJmlSaldo').value = '';
+            btn.disabled = false; btn.innerText = "SIMPAN SALDO AWAL";
+            backToDash();
+            applyFilter(); // Refresh Home agar angka berubah
+            return;
+        }
+
+        // Kirim ke Google Sheet
+        google.script.run.withSuccessHandler((res) => {
+            alert(res);
+            document.getElementById('inputJmlSaldo').value = '';
+            btn.disabled = false; btn.innerText = "SIMPAN SALDO AWAL";
+            backToDash();
+            applyFilter(); // Refresh Home
+        }).withFailureHandler((err) => {
+            alert("Gagal: " + err.message);
+            btn.disabled = false; btn.innerText = "SIMPAN SALDO AWAL";
+        }).prosesInput(formData);
     }
 
     // --- LOGIKA INPUT MODE (Switch Barang/Tunai) ---
