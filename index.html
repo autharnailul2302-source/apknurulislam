@@ -708,6 +708,12 @@
     // Variabel Global
     let globalDonaturs = [];
 
+    // --- DATA DUMMY LOKAL (Untuk Simulasi Offline) ---
+    // Ini menampung data sementara agar terlihat update saat anda mencoba input
+    let localTransactions = [
+        {tanggal: curDateStr, ket: 'Saldo Awal (Simulasi)', nominal: 1000000, tipe: 'masuk', kategori: 'Kas Awal'},
+    ];
+
     // Daftar Kategori Standar (Bawaan)
     const kategoriBawaan = [
       { nama: "Infaq Jumat", grup: "Pemasukan" },
@@ -1323,16 +1329,39 @@
       }
 
       if (typeof google === 'undefined' || typeof google.script === 'undefined') {
-        // Simulasi Data Dummy (Preview Mode)
-        setTimeout(() => renderData({
-          saldoTotal: 15000000,
-          masukPeriode: 2500000,
-          keluarPeriode: 500000,
-          riwayat: [
-            {tanggal: '27/10/2023', ket: 'Mode Preview (Belum Terhubung)', nominal: 500000, tipe: 'masuk'},
-            {tanggal: '25/10/2023', ket: '[BARANG] Semen (10 Sak) - Sumbangan Hamba Allah', nominal: 750000, tipe: 'masuk'}
-          ]
-        }), 800);
+        // --- SIMULASI MODE OFFLINE/PREVIEW (UPDATED) ---
+        // Hitung manual dari data localTransactions
+        setTimeout(() => {
+            let saldoTotal = 0;
+            let masukPeriode = 0;
+            let keluarPeriode = 0;
+            let riwayatFiltered = [];
+
+            // Urutkan data terbaru diatas
+            let sortedData = [...localTransactions].reverse();
+
+            sortedData.forEach(tx => {
+                // Hitung Saldo Total (Semua Waktu)
+                if(tx.tipe === 'masuk') saldoTotal += tx.nominal;
+                if(tx.tipe === 'keluar') saldoTotal -= tx.nominal;
+
+                // Filter Sederhana (Untuk simulasi ini kita tampilkan semua agar user lihat hasilnya)
+                // Di aplikasi asli filter ini akan strict sesuai tanggal
+                riwayatFiltered.push(tx);
+                
+                // Hitung Periode (Di simulasi ini anggap semua data masuk periode yg dipilih)
+                if(tx.tipe === 'masuk') masukPeriode += tx.nominal;
+                if(tx.tipe === 'keluar') keluarPeriode += tx.nominal;
+            });
+
+            renderData({
+              saldoTotal: saldoTotal,
+              masukPeriode: masukPeriode,
+              keluarPeriode: keluarPeriode,
+              riwayat: riwayatFiltered
+            });
+        }, 500);
+
       } else {
         google.script.run
           .withSuccessHandler(renderData)
@@ -1516,7 +1545,16 @@
           };
 
           if (typeof google === 'undefined' || typeof google.script === 'undefined') {
-            alert(`Mode Preview: Data tersimpan.\nKet: ${finalKeterangan}\nNominal: ${finalNominal}`); 
+            // SIMPAN KE DATA DUMMY (Supaya terlihat update)
+            localTransactions.push({
+                tanggal: formData.tanggal,
+                ket: formData.keterangan,
+                nominal: formData.nominal,
+                tipe: formData.jenis,
+                kategori: formData.kategori
+            });
+            
+            alert(`Mode Preview: Data tersimpan sementara.\nKet: ${finalKeterangan}\nNominal: ${finalNominal}`); 
             resetForm();
             return;
           }
