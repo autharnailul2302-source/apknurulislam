@@ -122,15 +122,23 @@
     .nav-tabs .nav-link { color: #6c757d; font-weight: 600; font-size: 0.85rem; }
     .nav-tabs .nav-link.active { color: var(--primary-color); border-bottom: 3px solid var(--primary-color); }
 
+    /* Alert Offline Mode */
+    #offlineAlert {
+        display: none;
+        background-color: #fff3cd;
+        color: #856404;
+        text-align: center;
+        padding: 8px;
+        font-size: 0.8rem;
+        border-bottom: 1px solid #ffeeba;
+    }
+
     /* --- STYLE KHUSUS CETAK / PRINT --- */
     @media print {
-        /* Sembunyikan elemen navigasi dan tombol */
         .fab, .masjid-header, .filter-card button, .nav-breadcrumb, 
-        .btn-close, .nav-tabs, #reportFilters button, .d-grid, .ticker-container {
+        .btn-close, .nav-tabs, #reportFilters button, .d-grid, .ticker-container, #offlineAlert {
             display: none !important;
         }
-        
-        /* Reset background dan warna */
         body { background-color: white; padding: 0; font-size: 12pt; }
         #adminSection { 
             display: block !important; 
@@ -140,8 +148,6 @@
             margin: 0; 
             padding: 0;
         }
-        
-        /* Tampilkan Header Laporan Resmi */
         #menuCetak::before {
             content: "LAPORAN KEUANGAN & INVENTARIS MUSHOLLA NURUL ISLAM";
             display: block;
@@ -160,20 +166,13 @@
             color: #666;
             margin-top: 20px;
         }
-
-        /* Rapikan area filter yang terpilih */
         #reportFilters { border: none !important; padding: 0 !important; background: none !important; }
         #reportFilters select { border: none; appearance: none; background: none; font-weight: bold; padding: 0; }
         #reportFilters label { display: inline-block; margin-right: 5px; }
-        
-        /* Rapikan area preview */
         #reportPreviewArea { border: 1px solid #000 !important; box-shadow: none !important; margin-top: 10px; }
-        
-        /* Sembunyikan menu lain selain menu cetak saat mode print */
         #loginStep, #dashMenu, #menuProfil, #menuDonatur, #menuInput, #menuKasAwal {
             display: none !important;
         }
-        /* Pastikan menu cetak terlihat */
         #menuCetak { display: block !important; }
     }
   </style>
@@ -193,6 +192,11 @@
     <h5 class="fw-bold mb-0"><i class="fas fa-mosque me-2"></i>Musholla Nurul Islam</h5>
     <small class="opacity-75" id="headerSaldo">Total Saldo: Rp 0</small>
   </header>
+  
+  <!-- OFFLINE ALERT -->
+  <div id="offlineAlert">
+      <i class="fas fa-exclamation-triangle me-1"></i> <strong>MODE PREVIEW:</strong> Data tidak akan tersimpan permanen.
+  </div>
 
   <!-- Running Text / Ticker -->
   <div class="ticker-container">
@@ -212,10 +216,8 @@
           <option value="tahunan">Tahunan</option>
         </select>
       </div>
-      
-      <!-- Input Dinamis sesuai Pilihan -->
       <div class="col-8" id="filterInputContainer">
-        <!-- Akan diisi oleh JS -->
+        <!-- Input Dinamis -->
       </div>
     </div>
     <button class="btn btn-success btn-sm w-100 mt-2" onclick="applyFilter()">
@@ -249,7 +251,7 @@
       </div>
     </div>
 
-    <!-- Ringkasan Inventaris (Barang Masuk) - BARU -->
+    <!-- Ringkasan Inventaris (Barang Masuk) -->
     <div class="card border-0 shadow-sm mb-4 bg-barang">
       <div class="card-body p-2 d-flex justify-content-between align-items-center">
          <div class="d-flex align-items-center">
@@ -326,10 +328,9 @@
       </button>
     </div>
 
-    <!-- STEP 2: DASHBOARD UTAMA (Muncul Setelah Login) -->
+    <!-- STEP 2: DASHBOARD UTAMA -->
     <div id="inputStep" style="display:none;">
       
-      <!-- Info Login User Header -->
       <div class="d-flex justify-content-between align-items-center mb-4 bg-light p-3 rounded-3 border">
         <div class="d-flex align-items-center">
             <div class="bg-success text-white rounded-circle me-3 d-flex align-items-center justify-content-center shadow-sm" style="width:40px; height:40px">
@@ -351,27 +352,22 @@
             <p class="small text-muted mb-0">Silakan pilih menu operasional:</p>
          </div>
          <div class="dashboard-grid">
-            <!-- Menu 1: Profil -->
             <div class="menu-item" onclick="openSubMenu('menuProfil')">
                <i class="fas fa-id-badge text-primary"></i>
                <span>Profil<br>Petugas</span>
             </div>
-            <!-- Menu 2: Data Donatur (BARU) -->
             <div class="menu-item" onclick="openSubMenu('menuDonatur')">
                <i class="fas fa-users text-info"></i>
                <span>Data<br>Donatur</span>
             </div>
-            <!-- Menu 3: Input Transaksi -->
             <div class="menu-item" onclick="openSubMenu('menuInput')">
                <i class="fas fa-edit text-success"></i>
                <span>Input<br>Transaksi</span>
             </div>
-            <!-- Menu 4: Kas Awal -->
             <div class="menu-item" onclick="openSubMenu('menuKasAwal')">
                <i class="fas fa-wallet text-warning"></i>
                <span>Input<br>Kas Awal</span>
             </div>
-            <!-- Menu 5: Rekap & Cetak -->
             <div class="menu-item" onclick="openSubMenu('menuCetak')">
                <i class="fas fa-print text-danger"></i>
                <span>Rekap &<br>Cetak</span>
@@ -379,7 +375,7 @@
          </div>
       </div>
 
-      <!-- B. SUB-MENU SECTIONS (Tersembunyi Awalnya) -->
+      <!-- B. SUB-MENU SECTIONS -->
       
       <!-- 1. VIEW PROFIL -->
       <div id="menuProfil" class="sub-menu d-none">
@@ -408,7 +404,7 @@
          </div>
       </div>
 
-      <!-- 2. VIEW DATA DONATUR (BARU) -->
+      <!-- 2. VIEW DATA DONATUR -->
       <div id="menuDonatur" class="sub-menu d-none">
           <div class="nav-breadcrumb" onclick="backToDash()"><i class="fas fa-arrow-left me-2"></i> Kembali ke Menu</div>
           <div class="d-flex justify-content-between align-items-center mb-3">
@@ -418,7 +414,6 @@
               </button>
           </div>
 
-          <!-- Form Tambah Donatur (Toggle) -->
           <div id="formTambahDonatur" class="card bg-light border-0 p-3 mb-3 d-none">
               <h6 class="small fw-bold text-muted mb-2">Input Donatur Baru</h6>
               <form onsubmit="simpanDonatur(event)">
@@ -441,7 +436,6 @@
               </form>
           </div>
 
-          <!-- List Donatur -->
           <div id="listDonaturContainer">
               <div class="text-center mt-3">
                  <div class="spinner-border text-info spinner-border-sm" role="status"></div>
@@ -450,19 +444,17 @@
           </div>
       </div>
 
-      <!-- 3. VIEW INPUT TRANSAKSI (UPDATED: Switch Barang/Uang) -->
+      <!-- 3. VIEW INPUT TRANSAKSI -->
       <div id="menuInput" class="sub-menu d-none">
         <div class="nav-breadcrumb" onclick="backToDash()"><i class="fas fa-arrow-left me-2"></i> Kembali ke Menu</div>
         
         <form id="formKeuangan" onsubmit="handleForm(this)">
-            <!-- Hidden Inputs -->
             <input type="hidden" name="username" id="hiddenUser">
             <input type="hidden" name="password" id="hiddenPass">
             <input type="hidden" name="token" id="hiddenToken">
 
             <div class="d-flex justify-content-between align-items-center mb-2 ps-1 border-start border-3 border-secondary">
                 <h6 class="fw-bold text-secondary small mb-0">&nbsp; Input Transaksi</h6>
-                <!-- Switch Mode Barang -->
                 <div class="form-check form-switch">
                     <input class="form-check-input" type="checkbox" id="switchBarang" onchange="toggleModeInput()">
                     <label class="form-check-label small text-muted fw-bold" for="switchBarang">Mode Barang</label>
@@ -478,18 +470,15 @@
                 <label class="small text-muted">Kategori Pos</label>
                 <select class="form-select form-select-sm" name="kategori" id="selectKategori" onchange="cekOpsiKategori(this.value)" required>
                     <option value="" disabled selected>Pilih Kategori...</option>
-                    <!-- Kategori akan di-inject oleh JavaScript -->
                 </select>
               </div>
             </div>
 
-            <!-- AREA KATEGORI CUSTOM -->
             <div id="areaKategoriLain" class="d-none mb-2">
                 <label class="small text-primary fw-bold">Nama Kategori Baru</label>
-                <input type="text" class="form-control form-control-sm border-primary" id="inputKategoriLain" placeholder="Tulis nama kategori (misal: ZIS Ramadhan 2026)">
+                <input type="text" class="form-control form-control-sm border-primary" id="inputKategoriLain" placeholder="Tulis nama kategori">
             </div>
 
-            <!-- AREA PILIH DONATUR -->
             <div id="areaDonatur" class="d-none mb-2 p-2 bg-light border rounded">
                 <label class="small text-muted mb-1 d-flex justify-content-between">
                     <span>Pilih Donatur</span>
@@ -497,15 +486,13 @@
                 </label>
                 <select class="form-select form-select-sm border-info" name="donatur_id" id="inputDonatur">
                     <option value="Hamba Allah">Hamba Allah (Anonim)</option>
-                    <!-- Opsi Donatur akan dimuat via JS -->
                 </select>
             </div>
             
-            <!-- FORM KHUSUS BARANG (Hidden by default) -->
             <div id="inputSectionBarang" class="d-none bg-light p-2 rounded border mb-2">
                 <div class="mb-2">
                     <label class="small text-muted fw-bold">Nama Barang / Logistik</label>
-                    <input type="text" class="form-control form-control-sm" id="inputNamaBarang" placeholder="Contoh: Air Mineral, Nasi Kotak">
+                    <input type="text" class="form-control form-control-sm" id="inputNamaBarang" placeholder="Contoh: Air Mineral">
                 </div>
                 <div class="row g-2">
                     <div class="col-6">
@@ -525,17 +512,15 @@
 
             <div class="mb-2">
               <label class="small text-muted">Uraian / Keterangan</label>
-              <textarea class="form-control form-control-sm" name="keterangan" rows="2" placeholder="Contoh: Sumbangan untuk acara pengajian..." required></textarea>
+              <textarea class="form-control form-control-sm" name="keterangan" rows="2" placeholder="Keterangan transaksi..." required></textarea>
             </div>
 
-            <!-- AREA UPLOAD FOTO -->
             <div class="mb-2">
                 <label class="small text-muted">Upload Bukti / Nota (Opsional)</label>
                 <input type="file" class="form-control form-control-sm" id="inputBukti" accept="image/jpeg, image/png">
                 <div class="form-text" style="font-size: 0.7rem;">Maksimal 2MB.</div>
             </div>
             
-            <!-- FORM DEBET/KREDIT (UANG) -->
             <div id="inputSectionUang">
                 <div class="row g-2 mb-3">
                   <div class="col-6">
@@ -569,7 +554,6 @@
             <div class="alert alert-warning small py-2">
                 <i class="fas fa-info-circle me-1"></i> Gunakan ini hanya untuk inisialisasi saldo awal tahun atau awal periode pembukuan.
             </div>
-            <!-- UPDATE: Form sekarang memanggil handleKasAwal -->
             <form onsubmit="handleKasAwal(event)">
                 <div class="mb-3">
                     <label class="small text-muted">Tanggal Saldo</label>
@@ -584,13 +568,12 @@
         </div>
       </div>
 
-      <!-- 5. VIEW REKAP & CETAK (DIUPDATE) -->
+      <!-- 5. VIEW REKAP & CETAK -->
       <div id="menuCetak" class="sub-menu d-none">
         <div class="nav-breadcrumb" onclick="backToDash()"><i class="fas fa-arrow-left me-2"></i> Kembali ke Menu</div>
         <div class="card border-0 shadow-sm p-3">
             <h6 class="fw-bold text-dark mb-3"><i class="fas fa-file-invoice-dollar me-2"></i>Pusat Laporan</h6>
             
-            <!-- TABS LAPORAN -->
             <ul class="nav nav-tabs nav-fill small mb-3" id="tabLaporan" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active fw-bold" id="tab-keuangan" onclick="switchReportTab('keuangan')" type="button">Keuangan</button>
@@ -600,7 +583,6 @@
                 </li>
             </ul>
 
-            <!-- CONTENT KEUANGAN -->
             <div id="viewKeuangan">
                 <div class="mb-3">
                     <label class="small text-muted fw-bold">Jenis Laporan</label>
@@ -614,8 +596,6 @@
                 </div>
 
                 <div id="reportFilters" class="bg-light p-2 rounded mb-3 border">
-                    
-                    <!-- Filter Bulan (Combo Box) -->
                     <div id="filterBulan" class="mb-2">
                         <label class="small text-muted">Pilih Periode</label>
                         <div class="input-group input-group-sm">
@@ -625,57 +605,38 @@
                                <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
                                <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
                             </select>
-                            <select id="rpt_thn_bln" class="form-select" style="max-width: 80px;">
-                               <!-- Diisi JS -->
-                            </select>
+                            <select id="rpt_thn_bln" class="form-select" style="max-width: 80px;"></select>
                         </div>
                     </div>
-
-                    <!-- Filter Tahun Saja -->
                     <div id="filterTahun" class="mb-2 d-none">
                         <label class="small text-muted">Pilih Tahun</label>
-                        <select id="rpt_thn_only" class="form-select form-select-sm">
-                            <!-- Diisi JS -->
-                        </select>
+                        <select id="rpt_thn_only" class="form-select form-select-sm"></select>
                     </div>
-
-                    <!-- Filter Kategori -->
                     <div id="filterKategori" class="mb-2 d-none">
                         <label class="small text-muted">Pilih Kategori</label>
-                        <select id="rpt_kategori" class="form-select form-select-sm">
-                            <!-- Diisi JS dari data kategori -->
-                        </select>
+                        <select id="rpt_kategori" class="form-select form-select-sm"></select>
                     </div>
-
-                    <!-- Filter Donatur -->
                     <div id="filterDonatur" class="mb-2 d-none">
                         <label class="small text-muted">Pilih Donatur</label>
-                        <select id="rpt_donatur" class="form-select form-select-sm">
-                            <!-- Diisi JS dari data donatur -->
-                        </select>
+                        <select id="rpt_donatur" class="form-select form-select-sm"></select>
                     </div>
-                    
                     <button class="btn btn-secondary btn-sm w-100 mt-2" onclick="generateReportPreview()">
                         <i class="fas fa-sync me-1"></i> Tampilkan Preview
                     </button>
                 </div>
             </div>
 
-            <!-- CONTENT INVENTARIS -->
             <div id="viewInventaris" class="d-none">
                 <div class="bg-light p-2 rounded mb-3 border">
                     <label class="small text-muted fw-bold mb-2">Laporan Barang Masuk</label>
                     <label class="small text-muted">Pilih Tahun</label>
-                    <select id="rpt_inv_thn" class="form-select form-select-sm mb-2">
-                        <!-- Populated by JS -->
-                    </select>
+                    <select id="rpt_inv_thn" class="form-select form-select-sm mb-2"></select>
                     <button class="btn btn-info text-white btn-sm w-100" onclick="generateInventoryPreview()">
                         <i class="fas fa-box-open me-1"></i> Cek Aset Barang
                     </button>
                 </div>
             </div>
 
-            <!-- Area Preview (Shared) -->
             <div id="reportPreviewArea" class="border rounded p-2 mb-3 bg-white" style="min-height: 80px;">
                 <p class="text-center text-muted small my-3"><em>Silakan atur filter dan klik 'Tampilkan Preview'</em></p>
             </div>
@@ -694,28 +655,22 @@
     </div>
   </div>
 
-  <!-- Tombol Fab -->
   <div class="fab" onclick="toggleAdmin()">
     <i class="fas fa-user-cog"></i>
   </div>
 
   <script>
-    // --- KONFIGURASI TANGGAL ---
     const today = new Date();
-    const curMonth = today.getMonth() + 1; // 1-12
+    const curMonth = today.getMonth() + 1; 
     const curYear = today.getFullYear();
     const curDateStr = today.toISOString().split('T')[0];
     
-    // Variabel Global
     let globalDonaturs = [];
 
-    // --- DATA DUMMY LOKAL (Untuk Simulasi Offline) ---
-    // Ini menampung data sementara agar terlihat update saat anda mencoba input
-    let localTransactions = [
-        {tanggal: curDateStr, ket: 'Saldo Awal (Simulasi)', nominal: 1000000, tipe: 'masuk', kategori: 'Kas Awal'},
-    ];
+    // --- DATA DUMMY DIKOSONGKAN ---
+    // Sekarang start kosong agar user tidak bingung
+    let localTransactions = [];
 
-    // Daftar Kategori Standar (Bawaan)
     const kategoriBawaan = [
       { nama: "Infaq Jumat", grup: "Pemasukan" },
       { nama: "Infaq Pembangunan", grup: "Pemasukan" },
@@ -729,8 +684,12 @@
       { nama: "Pemeliharaan Bangunan", grup: "Pengeluaran" }
     ];
 
-    // Setup Awal
     window.onload = function() {
+      // CEK OFFLINE MODE
+      if (typeof google === 'undefined' || typeof google.script === 'undefined') {
+          document.getElementById('offlineAlert').style.display = 'block';
+      }
+
       document.getElementById('inputTanggal').value = curDateStr;
       
       const savedUser = localStorage.getItem('mk_user');
@@ -744,28 +703,23 @@
           document.getElementById('checkRemember').checked = true;
       }
       
-      initReportDropdowns(); // Init dropdown tahun untuk laporan
+      initReportDropdowns();
       updateFilterUI(); 
       applyFilter(); 
       loadDonaturs();
-      loadKategoriServer(); // Load Kategori Dinamis
+      loadKategoriServer();
     };
 
-    // --- LOGIKA TICKER / RUNNING TEXT (BARU) ---
     function updateTicker(riwayat) {
       const container = document.getElementById('newsTickerContent');
       let html = '';
-      
-      // Ambil 5 pemasukan terakhir
       const incomeList = riwayat.filter(x => x.tipe === 'masuk').slice(0, 5);
 
       if(incomeList.length === 0) {
          html = '<div class="ticker-item">Selamat Datang di Aplikasi Keuangan Musholla Nurul Islam</div>';
       } else {
          incomeList.forEach(item => {
-            // Coba ekstrak nama donatur
             let name = "Hamba Allah";
-            // Cek pattern (Donatur: Nama)
             const match = item.ket.match(/\(Donatur: (.*?)\)/);
             if(match) {
                name = match[1];
@@ -773,15 +727,11 @@
                name = "Hamba Allah";
             }
 
-            // Cek apakah barang atau uang
             let val = "";
-            let displayItem = ""; // Apa yang didonasikan
+            let displayItem = "";
             
             if(item.ket.includes('[BARANG]')) {
-               // Parse format: [BARANG] Nama (Jml) - ...
-               // Kita ambil saja deskripsi barangnya dari ket
                let cleanKet = item.ket.replace('[BARANG]', '').trim();
-               // Coba ambil sebelum tanda "-" jika ada
                if(cleanKet.includes('-')) {
                    displayItem = cleanKet.split('-')[0].trim();
                } else {
@@ -799,10 +749,7 @@
       container.innerHTML = html;
     }
 
-    // --- LOGIKA LAPORAN DINAMIS ---
-    
     function initReportDropdowns() {
-        // Isi dropdown tahun di menu Laporan (3 tahun ke belakang)
         const sel1 = document.getElementById('rpt_thn_bln');
         const sel2 = document.getElementById('rpt_thn_only');
         let html = '';
@@ -811,20 +758,14 @@
         }
         sel1.innerHTML = html;
         sel2.innerHTML = html;
-        
-        // Set Bulan saat ini
         document.getElementById('rpt_bln').value = curMonth;
     }
 
-    // FUNGSI SWITCH TAB LAPORAN
     function switchReportTab(tab) {
-        // Reset UI Active State
         document.getElementById('tab-keuangan').classList.remove('active', 'text-success');
         document.getElementById('tab-inventaris').classList.remove('active', 'text-info');
         document.getElementById('viewKeuangan').classList.add('d-none');
         document.getElementById('viewInventaris').classList.add('d-none');
-        
-        // Reset Preview Area
         document.getElementById('reportPreviewArea').innerHTML = '<p class="text-center text-muted small my-3"><em>Silakan atur filter dan klik tombol...</em></p>';
 
         if(tab === 'keuangan') {
@@ -834,7 +775,6 @@
             document.getElementById('tab-inventaris').classList.add('active', 'text-info');
             document.getElementById('viewInventaris').classList.remove('d-none');
             
-            // Init Inventory Year Dropdown jika kosong
             if(document.getElementById('rpt_inv_thn').children.length === 0) {
                  const sel = document.getElementById('rpt_inv_thn');
                  let html = '';
@@ -851,7 +791,6 @@
         const fKategori = document.getElementById('filterKategori');
         const fDonatur = document.getElementById('filterDonatur');
         
-        // Reset all to hide
         fBulan.classList.add('d-none');
         fTahun.classList.add('d-none');
         fKategori.classList.add('d-none');
@@ -864,7 +803,6 @@
         } else if(type === 'kategori_bulan') {
             fKategori.classList.remove('d-none');
             fBulan.classList.remove('d-none');
-            // Populate kategori dropdown if empty
             if(document.getElementById('rpt_kategori').children.length === 0) populateReportCategories();
         } else if(type === 'kategori_tahun') {
             fKategori.classList.remove('d-none');
@@ -872,25 +810,20 @@
             if(document.getElementById('rpt_kategori').children.length === 0) populateReportCategories();
         } else if(type === 'donatur') {
             fDonatur.classList.remove('d-none');
-            fTahun.classList.remove('d-none'); // Filter tahunan untuk donatur
-            // Populate donatur dropdown
+            fTahun.classList.remove('d-none'); 
             populateReportDonaturs();
         }
     }
 
     function populateReportCategories() {
         const select = document.getElementById('rpt_kategori');
-        // Ambil opsi dari dropdown input utama yang sudah diload
         const mainSelect = document.getElementById('selectKategori');
         select.innerHTML = mainSelect.innerHTML;
-        // Hapus opsi "Pilih Kategori" dan "Lainnya"
         if(select.options.length > 0) select.remove(0);
-        // Hapus opsi terakhir (Lainnya) jika perlu, tapi biarkan dulu
     }
 
     function populateReportDonaturs() {
         const select = document.getElementById('rpt_donatur');
-        // Ambil dari input donatur utama
         const mainSelect = document.getElementById('inputDonatur');
         select.innerHTML = mainSelect.innerHTML;
     }
@@ -898,8 +831,6 @@
     function generateReportPreview() {
         const type = document.getElementById('reportType').value;
         const area = document.getElementById('reportPreviewArea');
-        
-        // Simulasi Preview (Karena backend belum support filter kompleks ini)
         let html = '<div class="small">';
         
         if(type === 'bulanan') {
@@ -915,14 +846,11 @@
                 <thead><tr><th>Tgl</th><th>Ket</th><th>Jml</th></tr></thead>
                 <tbody>
                     <tr><td>01/01</td><td>Infaq Awal Tahun</td><td>500.000</td></tr>
-                    <tr><td>15/03</td><td>Sumbangan Semen</td><td>250.000</td></tr>
                 </tbody>
             </table>`;
-            html += `<div class="text-end fw-bold">Total: Rp 750.000</div>`;
         } else if(type.includes('kategori')) {
             const kat = document.getElementById('rpt_kategori').value;
             html += `<strong class="d-block mb-2 text-success">Detail Kategori: ${kat}</strong>`;
-            html += `<div class="text-muted fst-italic">Menampilkan transaksi khusus kategori ini...</div>`;
             html += `<div class="mt-2 fw-bold">Subtotal: Rp 2.000.000</div>`;
         }
         
@@ -930,7 +858,6 @@
         area.innerHTML = html;
     }
 
-    // PREVIEW KHUSUS INVENTARIS
     function generateInventoryPreview() {
         const thn = document.getElementById('rpt_inv_thn').value;
         const area = document.getElementById('reportPreviewArea');
@@ -940,19 +867,14 @@
             <thead class="table-light"><tr><th>Tgl</th><th>Barang</th><th>Qty</th></tr></thead>
             <tbody>
                 <tr><td>12/01</td><td>Semen Tiga Roda</td><td>10 Sak</td></tr>
-                <tr><td>05/03</td><td>Air Mineral Gelas</td><td>5 Dus</td></tr>
-                <tr><td>20/06</td><td>Karpet Sajadah</td><td>2 Roll</td></tr>
             </tbody>
         </table>`;
-        html += `<div class="text-end small text-muted">Total Aset Masuk: 3 Item</div>`;
         area.innerHTML = html;
     }
 
-
-    // --- LOGIKA KATEGORI DINAMIS ---
     function loadKategoriServer() {
       if (typeof google === 'undefined' || typeof google.script === 'undefined') {
-        renderKategoriDropdown([]); // Render bawaan saja jika offline
+        renderKategoriDropdown([]);
         return;
       }
       
@@ -965,27 +887,22 @@
       const select = document.getElementById('selectKategori');
       select.innerHTML = '<option value="" disabled selected>Pilih Kategori...</option>';
       
-      // 1. Render Grup Pemasukan (Standar)
       let htmlMasuk = '<optgroup label="Pemasukan (Standar)">';
       kategoriBawaan.filter(k => k.grup === 'Pemasukan').forEach(k => {
          htmlMasuk += `<option value="${k.nama}">${k.nama}</option>`;
       });
       htmlMasuk += '</optgroup>';
       
-      // 2. Render Grup Pengeluaran (Standar)
       let htmlKeluar = '<optgroup label="Pengeluaran (Standar)">';
       kategoriBawaan.filter(k => k.grup === 'Pengeluaran').forEach(k => {
          htmlKeluar += `<option value="${k.nama}">${k.nama}</option>`;
       });
       htmlKeluar += '</optgroup>';
       
-      // 3. Render Grup Tambahan (Dari Riwayat)
-      // Filter kategori riwayat yang BELUM ada di bawaan
       let tambahanMasuk = '';
       let tambahanKeluar = '';
       
       riwayatKats.forEach(k => {
-         // Cek apakah sudah ada di bawaan?
          const isExist = kategoriBawaan.some(b => b.nama === k.nama);
          if(!isExist) {
             if(k.jenis === 'masuk') {
@@ -1004,17 +921,13 @@
          htmlTambahan += '</optgroup>';
       }
 
-      // Gabungkan
       select.innerHTML += htmlMasuk + htmlKeluar + htmlTambahan;
-      
-      // Opsi Lainnya Selalu Paling Bawah
       select.innerHTML += '<option value="Lainnya" class="fw-bold text-primary">-- Lainnya (Buat Baru) --</option>';
     }
 
-    // --- LOGIKA DATA DONATUR ---
     function loadDonaturs() {
       if (typeof google === 'undefined' || typeof google.script === 'undefined') {
-         globalDonaturs = [{id: 1, nama: "H. Abdullah (Offline)", hp: "081", alamat: "Jl. Mawar No 1", catatan: "Donatur tetap"}];
+         globalDonaturs = [];
          renderListDonatur(globalDonaturs);
          return;
       }
@@ -1094,7 +1007,7 @@
         };
 
         if (typeof google === 'undefined' || typeof google.script === 'undefined') {
-           alert("Mode Offline: Simpan berhasil.");
+           alert("Mode Preview: Data tidak tersimpan ke server.");
            btn.disabled = false; btn.innerText = 'Simpan';
            toggleFormDonatur();
            return;
@@ -1119,7 +1032,7 @@
         if(!confirm("Hapus data donatur ini dari Database?")) return;
         
         if (typeof google === 'undefined' || typeof google.script === 'undefined') {
-           alert("Mode Offline dihapus."); return;
+           alert("Mode Preview: Tidak dapat menghapus."); return;
         }
         
         google.script.run.withSuccessHandler(function(newData){
@@ -1129,20 +1042,16 @@
         }).hapusDonaturServer(id);
     }
 
-    // --- LOGIKA FORM INPUT (Update Kategori) ---
     function cekOpsiKategori(val) {
-        // 1. Cek Apakah Perlu Input Donatur
         const kategoriDonasi = ['Infaq Pembangunan', 'Donasi Tetap', 'Wakaf Tunai', 'Sumbangan Lainnya'];
         const areaDonatur = document.getElementById('areaDonatur');
         
-        // Cek juga kategori custom yang mungkin berbau donasi
         if(kategoriDonasi.includes(val) || val.toLowerCase().includes('infaq') || val.toLowerCase().includes('donasi')) {
             areaDonatur.classList.remove('d-none');
         } else {
             areaDonatur.classList.add('d-none');
         }
 
-        // 2. Cek Apakah Kategori Lainnya (Custom)
         const areaLain = document.getElementById('areaKategoriLain');
         const inputLain = document.getElementById('inputKategoriLain');
         
@@ -1157,7 +1066,6 @@
         }
     }
 
-    // --- LOGIKA KHUSUS KAS AWAL (BARU) ---
     function handleKasAwal(e) {
         e.preventDefault();
         
@@ -1173,7 +1081,6 @@
         btn.disabled = true; 
         btn.innerText = "Menyimpan...";
 
-        // Ambil kredensial dari hidden input form utama (karena user sudah login)
         const u = document.getElementById('hiddenUser').value;
         const p = document.getElementById('hiddenPass').value;
         const t = document.getElementById('hiddenToken').value;
@@ -1185,13 +1092,12 @@
             tanggal: tgl,
             kategori: "Saldo Awal",
             keterangan: "Saldo Awal / Sisa Kas Lalu",
-            jenis: "masuk", // Saldo awal dianggap pemasukan agar menambah kas
+            jenis: "masuk", 
             nominal: parseInt(nominal),
-            donatur_id: "-", // Tidak perlu donatur spesifik
+            donatur_id: "-", 
             file_bukti: null
         };
 
-        // Mode Preview Offline
         if (typeof google === 'undefined' || typeof google.script === 'undefined') {
             localTransactions.push({
                 tanggal: tgl,
@@ -1200,30 +1106,26 @@
                 tipe: 'masuk',
                 kategori: 'Saldo Awal'
             });
-            alert("Mode Preview: Saldo Awal Berhasil Disimpan!");
-            
-            // Reset UI
+            alert("Mode Preview: Saldo Awal Berhasil Ditampilkan (Sementara)!");
             document.getElementById('inputJmlSaldo').value = '';
             btn.disabled = false; btn.innerText = "SIMPAN SALDO AWAL";
             backToDash();
-            applyFilter(); // Refresh Home agar angka berubah
+            applyFilter(); 
             return;
         }
 
-        // Kirim ke Google Sheet
         google.script.run.withSuccessHandler((res) => {
             alert(res);
             document.getElementById('inputJmlSaldo').value = '';
             btn.disabled = false; btn.innerText = "SIMPAN SALDO AWAL";
             backToDash();
-            applyFilter(); // Refresh Home
+            applyFilter(); 
         }).withFailureHandler((err) => {
             alert("Gagal: " + err.message);
             btn.disabled = false; btn.innerText = "SIMPAN SALDO AWAL";
         }).prosesInput(formData);
     }
 
-    // --- LOGIKA INPUT MODE (Switch Barang/Tunai) ---
     function toggleModeInput() {
         const isBarang = document.getElementById('switchBarang').checked;
         const sectionUang = document.getElementById('inputSectionUang');
@@ -1242,16 +1144,13 @@
         }
     }
 
-    // --- LOGIKA NAVIGASI DASHBOARD ---
     function openSubMenu(menuId) {
         document.getElementById('dashMenu').classList.add('d-none');
         document.querySelectorAll('.sub-menu').forEach(el => el.classList.add('d-none'));
         document.getElementById(menuId).classList.remove('d-none');
         
-        // Setup khusus jika membuka menu Cetak untuk pertama kali
         if(menuId === 'menuCetak') {
-             updateReportForm(); // Ensure default visibility is correct
-             // Pastikan atribut tanggal cetak terupdate
+             updateReportForm(); 
              document.getElementById('menuCetak').setAttribute('data-print-date', new Date().toLocaleString('id-ID'));
         }
     }
@@ -1261,7 +1160,6 @@
         document.getElementById('dashMenu').classList.remove('d-none');
     }
 
-    // --- LOGIKA LOGIN / LOGOUT UI ---
     function prosesLogin() {
       const u = document.getElementById('loginUser').value;
       const p = document.getElementById('loginPass').value;
@@ -1281,7 +1179,6 @@
          return;
       }
 
-      // Simpan ke LocalStorage jika dicentang
       const isRemember = document.getElementById('checkRemember').checked;
       if(isRemember) {
         localStorage.setItem('mk_user', u);
@@ -1297,7 +1194,6 @@
       document.getElementById('hiddenPass').value = p;
       document.getElementById('hiddenToken').value = t;
       document.getElementById('displayUser').innerText = u;
-      
       document.getElementById('lastLoginTime').innerText = new Date().toLocaleString();
 
       document.getElementById('loginStep').style.display = 'none';
@@ -1318,7 +1214,6 @@
       document.getElementById('loginStep').style.display = 'block';
     }
 
-    // --- LOGIKA FORM INPUT ---
     function cekPosisi(mode) {
       const debet = document.getElementById('inputDebet');
       const kredit = document.getElementById('inputKredit');
@@ -1396,27 +1291,17 @@
       }
 
       if (typeof google === 'undefined' || typeof google.script === 'undefined') {
-        // --- SIMULASI MODE OFFLINE/PREVIEW (UPDATED) ---
-        // Hitung manual dari data localTransactions
         setTimeout(() => {
             let saldoTotal = 0;
             let masukPeriode = 0;
             let keluarPeriode = 0;
             let riwayatFiltered = [];
-
-            // Urutkan data terbaru diatas
             let sortedData = [...localTransactions].reverse();
 
             sortedData.forEach(tx => {
-                // Hitung Saldo Total (Semua Waktu)
                 if(tx.tipe === 'masuk') saldoTotal += tx.nominal;
                 if(tx.tipe === 'keluar') saldoTotal -= tx.nominal;
-
-                // Filter Sederhana (Untuk simulasi ini kita tampilkan semua agar user lihat hasilnya)
-                // Di aplikasi asli filter ini akan strict sesuai tanggal
                 riwayatFiltered.push(tx);
-                
-                // Hitung Periode (Di simulasi ini anggap semua data masuk periode yg dipilih)
                 if(tx.tipe === 'masuk') masukPeriode += tx.nominal;
                 if(tx.tipe === 'keluar') keluarPeriode += tx.nominal;
             });
@@ -1454,33 +1339,28 @@
       elSelisih.className = selisih >= 0 ? "fw-bold text-success" : "fw-bold text-danger";
 
       let html = '';
-      let countBarang = 0; // Hitung jumlah transaksi barang
+      let countBarang = 0; 
 
       if(data.riwayat.length === 0) {
         html = '<div class="text-center text-muted py-4 small">Tidak ada transaksi pada periode ini.</div>';
       } else {
         data.riwayat.forEach(item => {
-          // Deteksi apakah ini transaksi barang (berdasarkan tag di keterangan)
           const isBarang = item.ket.includes('[BARANG]');
           if(isBarang) countBarang++;
 
           const isMasuk = item.tipe === 'masuk';
-          
-          // Tentukan styling
           let borderClass = isMasuk ? 'trans-masuk' : 'trans-keluar';
           let nominalClass = isMasuk ? 'text-success' : 'text-danger';
           let nominalText = (isMasuk ? '+' : '-') + ' ' + formatRupiah(Math.abs(item.nominal));
           let icon = '';
 
-          // Jika barang, override styling
           if(isBarang) {
              borderClass = 'trans-barang';
-             nominalClass = 'text-info'; // Warna biru muda
+             nominalClass = 'text-info';
              nominalText = (item.nominal > 0) ? formatRupiah(item.nominal) : 'Aset Non-Tunai';
              icon = '<i class="fas fa-box text-info me-1"></i> ';
           }
 
-          // Bersihkan tag [BARANG] agar tampilan lebih rapi
           const displayKet = isBarang ? item.ket.replace('[BARANG]', '').trim() : item.ket;
 
           html += `
@@ -1501,11 +1381,7 @@
       }
       
       document.getElementById('listRiwayat').innerHTML = html;
-      
-      // Update Statistik Barang
       document.getElementById('valBarang').innerText = countBarang + " Item";
-      
-      // Update Ticker Berita Berjalan (NEW)
       updateTicker(data.riwayat);
     }
 
@@ -1520,7 +1396,6 @@
       
       const isBarang = document.getElementById('switchBarang').checked;
       
-      // Validasi Manual
       let valDebet = 0;
       let valKredit = 0;
       let namaBrg = '';
@@ -1528,7 +1403,6 @@
       let estHarga = 0;
 
       if (!isBarang) {
-          // Mode Uang
           valDebet = document.getElementById('inputDebet').value;
           valKredit = document.getElementById('inputKredit').value;
           if (!valDebet && !valKredit) {
@@ -1536,7 +1410,6 @@
             return;
           }
       } else {
-          // Mode Barang
           namaBrg = document.getElementById('inputNamaBarang').value.trim();
           jmlBrg = document.getElementById('inputJmlBarang').value.trim();
           estHarga = document.getElementById('inputEstHarga').value;
@@ -1547,11 +1420,10 @@
           }
       }
       
-      // CEK FILE UKURAN (MAX 2MB)
       const fileInput = document.getElementById('inputBukti');
       if (fileInput.files.length > 0) {
         const f = fileInput.files[0];
-        if (f.size > 2 * 1024 * 1024) { // 2MB
+        if (f.size > 2 * 1024 * 1024) { 
              alert("Ukuran file bukti terlalu besar! Maksimal 2MB.");
              return;
         }
@@ -1560,7 +1432,6 @@
       const btn = document.getElementById('btnSimpan');
       btn.disabled = true; btn.innerText = "Memproses...";
 
-      // FUNGSI KIRIM DATA
       const submitData = (fileData) => {
           let finalNominal = 0;
           let finalJenis = '';
@@ -1575,10 +1446,8 @@
                 finalJenis = 'keluar';
               }
           } else {
-              // Mode Barang diperlakukan sebagai Pemasukan (Asset)
               finalJenis = 'masuk';
               finalNominal = estHarga ? parseInt(estHarga) : 0;
-              // Gabung info barang ke keterangan dengan TAG khusus [BARANG]
               finalKeterangan = `[BARANG] ${namaBrg} (${jmlBrg}) - ${finalKeterangan}`;
           }
           
@@ -1612,7 +1481,6 @@
           };
 
           if (typeof google === 'undefined' || typeof google.script === 'undefined') {
-            // SIMPAN KE DATA DUMMY (Supaya terlihat update)
             localTransactions.push({
                 tanggal: formData.tanggal,
                 ket: formData.keterangan,
@@ -1621,7 +1489,7 @@
                 kategori: formData.kategori
             });
             
-            alert(`Mode Preview: Data tersimpan sementara.\nKet: ${finalKeterangan}\nNominal: ${finalNominal}`); 
+            alert(`Mode Preview: Data tersimpan SEMENTARA.\nKet: ${finalKeterangan}`); 
             resetForm();
             return;
           }
@@ -1635,17 +1503,15 @@
           }).prosesInput(formData);
       };
 
-      // FUNGSI RESET FORM
       const resetForm = () => {
         form.reset();
         document.getElementById('inputTanggal').value = curDateStr;
         document.getElementById('areaKategoriLain').classList.add('d-none');
         document.getElementById('areaDonatur').classList.add('d-none');
         
-        // Reset tampilan mode barang
         if(isBarang) {
             document.getElementById('switchBarang').checked = false;
-            toggleModeInput(); // Kembalikan ke mode uang
+            toggleModeInput(); 
         }
         
         cekPosisi('reset'); 
@@ -1656,7 +1522,6 @@
         backToDash(); 
       };
 
-      // PROSES FILE READING (Jika ada file)
       if (fileInput.files.length > 0) {
           const reader = new FileReader();
           reader.onload = function(e) {
