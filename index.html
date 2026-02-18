@@ -618,7 +618,7 @@
 
   <script>
     // --- KONFIGURASI API UTAMA ---
-    const APP_URL = "https://script.google.com/macros/s/AKfycbxt60F91eCVSBifqPEMnvai1gFkTF3vVMGwkusWguV2sqdZqwW2m2fIaOzGDVUCDDmx1g/exec";
+    const APP_URL = "https://script.google.com/macros/s/AKfycbwycwKcMd8NXBKZKoW71utLG3GoRZXXQV6dfT1Ki0r7YJgq6sUzZm4dPit1DZRJUfgw-Q/exec";
 
     // FUNGSI PENGHUBUNG (Bridge) - UPDATED FOR ROBUSTNESS
     function callAPI(action, params = {}, method = 'GET') {
@@ -694,6 +694,7 @@
 
     window.onload = function() {
       document.getElementById('inputTanggal').value = curDateStr;
+      document.getElementById('inputTglSaldo').value = curDateStr; // Init tgl saldo
       
       const savedUser = localStorage.getItem('mk_user');
       const savedPass = localStorage.getItem('mk_pass');
@@ -1108,8 +1109,47 @@
     }
     function generateReportPreview() { document.getElementById('reportPreviewArea').innerHTML = '<div class="text-center text-info small">Preview akan muncul di sini (Simulasi).</div>'; }
     function generateInventoryPreview() { document.getElementById('reportPreviewArea').innerHTML = '<div class="text-center text-info small">List Barang (Simulasi).</div>'; }
-    function handleKasAwal(e) { e.preventDefault(); alert("Fitur Kas Awal belum terhubung ke backend ini."); }
+    
+    // FUNGSI HANDLE KAS AWAL YANG DIPERBAIKI
+    function handleKasAwal(e) {
+        e.preventDefault();
+        
+        const tgl = document.getElementById('inputTglSaldo').value;
+        const jml = document.getElementById('inputJmlSaldo').value;
+        const user = document.getElementById('hiddenUser').value || 'Bendahara';
+        const token = document.getElementById('hiddenToken').value;
+
+        if(!tgl || !jml) { alert("Mohon lengkapi data!"); return; }
+
+        const btn = document.getElementById('btnSimpanSaldo');
+        btn.disabled = true; btn.innerText = "Menyimpan...";
+
+        const data = {
+            username: user,
+            token: token,
+            tanggal: tgl,
+            kategori: "Saldo Awal",
+            keterangan: "Saldo Awal Pembukuan",
+            jenis: "masuk",
+            nominal: parseInt(jml),
+            donatur_id: "-"
+        };
+
+        callAPI('prosesInput', data)
+            .then(res => {
+                alert("Saldo Awal Berhasil Disimpan!");
+                // Reset form jika perlu
+                document.getElementById('inputJmlSaldo').value = "";
+                applyFilter(); // Refresh dashboard agar saldo berubah
+                backToDash();
+            })
+            .catch(err => {
+                alert("Gagal: " + err);
+            })
+            .finally(() => {
+                btn.disabled = false; btn.innerText = "SIMPAN SALDO AWAL";
+            });
+    }
   </script>
 </body>
 </html>
-
