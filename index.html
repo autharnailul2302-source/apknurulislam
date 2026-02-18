@@ -818,7 +818,9 @@
       const fullHtml = htmlOptions[0] + htmlMasuk + htmlKeluar + (tambahan ? `<optgroup label="Lainnya">${tambahan}</optgroup>` : '') + '<option value="Lainnya" class="fw-bold text-primary">-- Lainnya (Buat Baru) --</option>';
       
       select.innerHTML = fullHtml;
-      selectEdit.innerHTML = fullHtml; // Populate juga untuk modal edit
+      
+      // PERBAIKAN: Hapus opsi "Lainnya" dari menu Edit agar tidak error
+      selectEdit.innerHTML = fullHtml.replace('<option value="Lainnya" class="fw-bold text-primary">-- Lainnya (Buat Baru) --</option>', '');
     }
 
     function loadDonaturs() {
@@ -892,7 +894,8 @@
           let nominal = 0;
           let jenis = '';
           let ket = form.keterangan.value;
-          let kat = form.kategori.value;
+          // PERBAIKAN LOGIKA KATEGORI LAIN
+          let kat = document.getElementById('selectKategori').value;
 
           if (isBarang) {
               const nmBrg = document.getElementById('inputNamaBarang').value;
@@ -905,7 +908,18 @@
               else { nominal = valKredit; jenis = 'keluar'; }
           }
 
-          if (kat === 'Lainnya') kat = document.getElementById('inputKategoriLain').value;
+          // PERBAIKAN: Validasi ketat untuk input "Lainnya"
+          if (kat === 'Lainnya') {
+              const katLain = document.getElementById('inputKategoriLain').value.trim();
+              if(katLain) {
+                  kat = katLain;
+              } else {
+                  alert("Nama Kategori Lainnya wajib diisi!");
+                  btn.disabled = false;
+                  btn.innerText = "POSTING JURNAL";
+                  return; // Stop process
+              }
+          }
           
           const donaturId = (!document.getElementById('areaDonatur').classList.contains('d-none')) 
                             ? document.getElementById('inputDonatur').value : "";
@@ -927,7 +941,13 @@
             .then(res => {
                 alert(res.message || "Berhasil Disimpan!");
                 form.reset();
+                // Reset manual untuk elemen yang tidak ter-reset otomatis
                 document.getElementById('inputTanggal').value = curDateStr;
+                document.getElementById('areaKategoriLain').classList.add('d-none'); // Sembunyikan lagi
+                
+                // PERBAIKAN: Reload kategori agar yang baru langsung muncul
+                loadKategoriServer();
+                
                 applyFilter(); // Refresh Data
                 backToDash();
             })
