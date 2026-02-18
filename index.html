@@ -518,6 +518,7 @@
                     <label class="small fw-bold text-success">DEBET (Masuk)</label>
                     <div class="input-group input-group-sm">
                       <span class="input-group-text bg-success text-white border-success">Rp</span>
+                      <!-- PERBAIKAN: Menghilangkan oninput yang mematikan field -->
                       <input type="number" class="form-control input-debet fw-bold" id="inputDebet" name="debet" placeholder="0" oninput="cekPosisi('debet')">
                     </div>
                   </div>
@@ -525,6 +526,7 @@
                     <label class="small fw-bold text-danger">KREDIT (Keluar)</label>
                     <div class="input-group input-group-sm">
                       <span class="input-group-text bg-danger text-white border-danger">Rp</span>
+                      <!-- PERBAIKAN: Menghilangkan oninput yang mematikan field -->
                       <input type="number" class="form-control input-kredit fw-bold" id="inputKredit" name="kredit" placeholder="0" oninput="cekPosisi('kredit')">
                     </div>
                   </div>
@@ -1022,7 +1024,21 @@
       elSelisih.className = selisih >= 0 ? "fw-bold text-success" : "fw-bold text-danger";
 
       // Cek Login Status untuk menampilkan tombol edit
-      const isLoggedIn = localStorage.getItem('mk_user') !== null;
+      const user = localStorage.getItem('mk_user');
+      const token = localStorage.getItem('mk_token');
+      const isLoggedIn = user && token; // Cek user DAN token
+
+      // Update status mode di footer
+      const statusEl = document.getElementById('koneksiStatus');
+      // Pastikan statusEl ada sebelum memanipulasi
+      if(statusEl) {
+        if(isLoggedIn) {
+            // Cek apakah sudah ada badge admin sebelumnya untuk menghindari duplikasi
+            if(!statusEl.querySelector('.mode-admin-badge')) {
+               statusEl.innerHTML += ' <span class="text-warning fw-bold border-start ps-2 ms-2 mode-admin-badge">Mode Admin</span>';
+            }
+        }
+      }
 
       let html = '';
       let countBarang = 0;
@@ -1240,8 +1256,14 @@
         if(data) data.forEach(d => select.innerHTML += `<option value="${d.nama}">${d.nama}</option>`);
     }
 
+    // PERBAIKAN: Menambahkan reset status disabled pada kolom uang
     function cekOpsiKategori(val) {
         const areaDonatur = document.getElementById('areaDonatur');
+        
+        // Reset Status Input Uang (PENTING)
+        document.getElementById('inputDebet').disabled = false;
+        document.getElementById('inputKredit').disabled = false;
+        
         if(['Infaq Pembangunan','Donasi Tetap','Wakaf Tunai'].includes(val) || val.toLowerCase().includes('infaq')) areaDonatur.classList.remove('d-none');
         else areaDonatur.classList.add('d-none');
         
@@ -1261,11 +1283,20 @@
         }
     }
 
+    // PERBAIKAN LOGIKA PENGUCIAN: Tidak lagi mematikan field, hanya membersihkan
     function cekPosisi(mode) {
       const d = document.getElementById('inputDebet'), k = document.getElementById('inputKredit');
-      if (mode === 'debet' && d.value) { k.value=''; k.disabled=true; }
-      else if (mode === 'kredit' && k.value) { d.value=''; d.disabled=true; }
-      else { d.disabled=false; k.disabled=false; }
+      
+      // Jika ketik di Debet, bersihkan Kredit (tapi jangan matikan)
+      if (mode === 'debet' && d.value !== '') { 
+          k.value = ''; 
+          k.disabled = false; 
+      }
+      // Jika ketik di Kredit, bersihkan Debet (tapi jangan matikan)
+      else if (mode === 'kredit' && k.value !== '') { 
+          d.value = ''; 
+          d.disabled = false; 
+      }
     }
 
     // --- LOGIN/NAV SYSTEM ---
