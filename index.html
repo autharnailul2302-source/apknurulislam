@@ -81,8 +81,15 @@
     /* List Transaksi */
     .trans-item {
       background: white; border-radius: 10px; padding: 12px; margin-bottom: 8px;
-      display: flex; justify-content: space-between; align-items: center;
       border-left: 4px solid #ccc;
+      position: relative;
+    }
+    .trans-content {
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .trans-actions {
+      margin-top: 10px; padding-top: 10px; border-top: 1px dashed #eee;
+      display: flex; justify-content: flex-end; gap: 8px;
     }
     .trans-masuk { border-left-color: #198754; }
     .trans-keluar { border-left-color: #dc3545; }
@@ -95,6 +102,20 @@
     
     .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; justify-content: center; align-items: center; z-index: 9999; }
     
+    /* Edit Modal Overlay */
+    .custom-modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5); z-index: 2000;
+        display: none; justify-content: center; align-items: flex-end;
+    }
+    .custom-modal-content {
+        background: white; width: 100%; max-width: 500px;
+        border-radius: 20px 20px 0 0; padding: 25px;
+        animation: slideUp 0.3s ease-out;
+        max-height: 90vh; overflow-y: auto;
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
     /* Style Khusus Form Keuangan Baru */
     .input-debet { border-color: #198754 !important; background-color: #f0fff4 !important; }
     .input-kredit { border-color: #dc3545 !important; background-color: #fff5f5 !important; }
@@ -125,7 +146,7 @@
     /* --- STYLE KHUSUS CETAK / PRINT --- */
     @media print {
         .fab, .masjid-header, .filter-card button, .nav-breadcrumb, 
-        .btn-close, .nav-tabs, #reportFilters button, .d-grid, .ticker-container {
+        .btn-close, .nav-tabs, #reportFilters button, .d-grid, .ticker-container, .trans-actions {
             display: none !important;
         }
         body { background-color: white; padding: 0; font-size: 12pt; }
@@ -616,6 +637,50 @@
 
   <div class="fab" onclick="toggleAdmin()"><i class="fas fa-user-cog"></i></div>
 
+  <!-- Modal Edit Transaksi -->
+  <div id="modalEdit" class="custom-modal-overlay">
+      <div class="custom-modal-content">
+          <div class="d-flex justify-content-between mb-3">
+              <h6 class="fw-bold text-warning"><i class="fas fa-edit me-2"></i>Edit Transaksi</h6>
+              <button class="btn-close" onclick="tutupEdit()"></button>
+          </div>
+          <form id="formEditTransaksi" onsubmit="simpanEdit(event)">
+              <input type="hidden" id="editIndex">
+              <input type="hidden" id="editOriginalId">
+              
+              <div class="mb-2">
+                  <label class="small text-muted">Tanggal</label>
+                  <input type="date" class="form-control form-control-sm" id="editTanggal" required>
+              </div>
+              
+              <div class="mb-2">
+                  <label class="small text-muted">Kategori</label>
+                  <select class="form-select form-select-sm" id="editKategori">
+                      <!-- Diisi via JS -->
+                  </select>
+              </div>
+
+              <div class="mb-2">
+                  <label class="small text-muted">Keterangan</label>
+                  <textarea class="form-control form-control-sm" id="editKeterangan" rows="2" required></textarea>
+              </div>
+
+              <div class="mb-3">
+                  <label class="small fw-bold" id="labelEditNominal">Nominal</label>
+                  <div class="input-group input-group-sm">
+                      <span class="input-group-text">Rp</span>
+                      <input type="number" class="form-control fw-bold" id="editNominal" required>
+                  </div>
+              </div>
+
+              <div class="d-flex gap-2">
+                  <button type="submit" class="btn btn-warning w-100 fw-bold text-white">UPDATE DATA</button>
+                  <button type="button" class="btn btn-outline-secondary w-100" onclick="tutupEdit()">Batal</button>
+              </div>
+          </form>
+      </div>
+  </div>
+
   <script>
     // --- KONFIGURASI API UTAMA ---
     const APP_URL = "https://script.google.com/macros/s/AKfycbxt60F91eCVSBifqPEMnvai1gFkTF3vVMGwkusWguV2sqdZqwW2m2fIaOzGDVUCDDmx1g/exec";
@@ -677,6 +742,7 @@
     const curDateStr = today.toISOString().split('T')[0];
     
     let globalDonaturs = [];
+    let globalRiwayat = []; // Menyimpan data riwayat untuk diedit
     
     // Data Dummy untuk Mode Offline
     let localTransactions = [
@@ -727,7 +793,8 @@
 
     function renderKategoriDropdown(riwayatKats) {
       const select = document.getElementById('selectKategori');
-      select.innerHTML = '<option value="" disabled selected>Pilih Kategori...</option>';
+      const selectEdit = document.getElementById('editKategori');
+      const htmlOptions = ['<option value="" disabled selected>Pilih Kategori...</option>'];
       
       let htmlMasuk = '<optgroup label="Pemasukan (Standar)">';
       kategoriBawaan.filter(k => k.grup === 'Pemasukan').forEach(k => htmlMasuk += `<option value="${k.nama}">${k.nama}</option>`);
@@ -746,7 +813,10 @@
           });
       }
       
-      select.innerHTML += htmlMasuk + htmlKeluar + (tambahan ? `<optgroup label="Lainnya">${tambahan}</optgroup>` : '') + '<option value="Lainnya" class="fw-bold text-primary">-- Lainnya (Buat Baru) --</option>';
+      const fullHtml = htmlOptions[0] + htmlMasuk + htmlKeluar + (tambahan ? `<optgroup label="Lainnya">${tambahan}</optgroup>` : '') + '<option value="Lainnya" class="fw-bold text-primary">-- Lainnya (Buat Baru) --</option>';
+      
+      select.innerHTML = fullHtml;
+      selectEdit.innerHTML = fullHtml; // Populate juga untuk modal edit
     }
 
     function loadDonaturs() {
@@ -938,6 +1008,10 @@
 
     function renderData(data) {
       document.getElementById('loading').style.display = 'none';
+      
+      // Simpan global untuk keperluan edit
+      globalRiwayat = data.riwayat || [];
+
       document.getElementById('headerSaldo').innerText = "Total Saldo: " + formatRupiah(data.saldoTotal);
       document.getElementById('valMasuk').innerText = formatRupiah(data.masukPeriode);
       document.getElementById('valKeluar').innerText = formatRupiah(data.keluarPeriode);
@@ -947,13 +1021,16 @@
       elSelisih.innerText = formatRupiah(selisih);
       elSelisih.className = selisih >= 0 ? "fw-bold text-success" : "fw-bold text-danger";
 
+      // Cek Login Status untuk menampilkan tombol edit
+      const isLoggedIn = localStorage.getItem('mk_user') !== null;
+
       let html = '';
       let countBarang = 0;
       
       if(!data.riwayat || data.riwayat.length === 0) {
         html = '<div class="text-center text-muted py-4 small">Tidak ada transaksi.</div>';
       } else {
-        data.riwayat.forEach(item => {
+        data.riwayat.forEach((item, index) => {
           const isBarang = item.ket.includes('[BARANG]');
           if(isBarang) countBarang++;
           const isMasuk = item.tipe === 'masuk';
@@ -967,21 +1044,147 @@
           let displayKet = isBarang ? item.ket.replace('[BARANG]', '').trim() : item.ket;
           let icon = isBarang ? '<i class="fas fa-box text-info me-1"></i> ' : '';
 
+          // Tombol Edit (Hanya jika Login)
+          let actionButtons = '';
+          if(isLoggedIn) {
+             actionButtons = `
+             <div class="trans-actions">
+                <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem" onclick="bukaEdit(${index})">
+                   <i class="fas fa-pencil-alt me-1"></i> Edit
+                </button>
+                <button class="btn btn-sm btn-outline-danger" style="font-size:0.75rem" onclick="hapusData(${index}, '${item.id || ''}')">
+                   <i class="fas fa-trash"></i>
+                </button>
+             </div>`;
+          }
+
           html += `
             <div class="trans-item ${borderClass}">
-              <div style="width: 65%">
-                <span class="tgl-badge">${item.tanggal}</span>
-                <div class="fw-bold text-dark mt-1 text-truncate">${icon}${displayKet}</div>
+              <div class="trans-content">
+                  <div style="width: 65%">
+                    <span class="tgl-badge">${item.tanggal}</span>
+                    <div class="fw-bold text-dark mt-1 text-truncate">${icon}${displayKet}</div>
+                  </div>
+                  <div class="text-end" style="width: 35%">
+                    <div class="fw-bold ${nominalClass}" style="font-size:0.9rem">${nominalText}</div>
+                  </div>
               </div>
-              <div class="text-end" style="width: 35%">
-                <div class="fw-bold ${nominalClass}" style="font-size:0.9rem">${nominalText}</div>
-              </div>
+              ${actionButtons}
             </div>`;
         });
       }
       document.getElementById('listRiwayat').innerHTML = html;
       document.getElementById('valBarang').innerText = countBarang + " Item";
       updateTicker(data.riwayat || []);
+    }
+
+    // --- FITUR EDIT & HAPUS ---
+    function bukaEdit(index) {
+        const item = globalRiwayat[index];
+        if(!item) return;
+
+        // Populate Form
+        document.getElementById('editIndex').value = index;
+        document.getElementById('editOriginalId').value = item.id || ""; // Backup jika backend support ID
+        document.getElementById('editTanggal').value = item.tanggal;
+        document.getElementById('editKategori').value = item.kategori;
+        document.getElementById('editKeterangan').value = item.ket;
+        document.getElementById('editNominal').value = item.nominal;
+        
+        // Atur label nominal
+        const lbl = document.getElementById('labelEditNominal');
+        lbl.innerText = item.tipe === 'masuk' ? "Nominal (Pemasukan)" : "Nominal (Pengeluaran)";
+        lbl.className = item.tipe === 'masuk' ? "small fw-bold text-success" : "small fw-bold text-danger";
+
+        // Tampilkan Modal
+        document.getElementById('modalEdit').style.display = 'flex';
+    }
+
+    function tutupEdit() {
+        document.getElementById('modalEdit').style.display = 'none';
+    }
+
+    function simpanEdit(e) {
+        e.preventDefault();
+        const idx = document.getElementById('editIndex').value;
+        const itemLama = globalRiwayat[idx];
+        
+        // Data Baru
+        const newData = {
+            username: localStorage.getItem('mk_user'),
+            token: localStorage.getItem('mk_token'),
+            // Identifikasi baris (Logic backend harus diupdate untuk menerima ini)
+            original_date: itemLama.tanggal, 
+            original_ket: itemLama.ket,
+            
+            // Data Update
+            tanggal: document.getElementById('editTanggal').value,
+            kategori: document.getElementById('editKategori').value,
+            keterangan: document.getElementById('editKeterangan').value,
+            nominal: parseInt(document.getElementById('editNominal').value),
+            tipe: itemLama.tipe // Tipe (masuk/keluar) biasanya tetap, kecuali fitur ubah tipe ditambahkan
+        };
+
+        if(confirm("Yakin ingin mengubah data ini?")) {
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true; btn.innerText = "Mengupdate...";
+
+            callAPI('editTransaksi', newData) // Pastikan backend punya action 'editTransaksi'
+                .then(res => {
+                    alert("Data Berhasil Diupdate!");
+                    tutupEdit();
+                    applyFilter();
+                })
+                .catch(err => {
+                    // Fallback Offline Simulasi
+                     if(err === "OFFLINE_MODE" || err.toString().includes("ScriptError")) {
+                        alert("Mode Demo: Data berhasil diubah di tampilan saja (Refresh akan mereset).");
+                        // Update lokal
+                        globalRiwayat[idx].tanggal = newData.tanggal;
+                        globalRiwayat[idx].kategori = newData.kategori;
+                        globalRiwayat[idx].ket = newData.keterangan;
+                        globalRiwayat[idx].nominal = newData.nominal;
+                        
+                        // Re-render manual
+                        // Hacky re-render filtered data logic here or just applyFilter
+                        tutupEdit();
+                        applyFilter();
+                    } else {
+                        alert("Gagal Edit: Backend belum mendukung fitur edit. Mohon update script backend Anda.");
+                    }
+                })
+                .finally(() => {
+                    btn.disabled = false; btn.innerText = "UPDATE DATA";
+                });
+        }
+    }
+
+    function hapusData(index, id) {
+        if(confirm("PERINGATAN: Yakin hapus transaksi ini? Data tidak bisa dikembalikan.")) {
+            const item = globalRiwayat[index];
+            const payload = {
+                username: localStorage.getItem('mk_user'),
+                token: localStorage.getItem('mk_token'),
+                original_date: item.tanggal,
+                original_ket: item.ket,
+                nominal: item.nominal
+            };
+
+            callAPI('hapusTransaksi', payload)
+                .then(res => {
+                    alert("Data Terhapus.");
+                    applyFilter();
+                })
+                .catch(err => {
+                     if(err === "OFFLINE_MODE" || err.toString().includes("ScriptError")) {
+                         alert("Mode Demo: Data dihapus dari tampilan.");
+                         localTransactions.splice(index, 1); // Hapus dummy
+                         applyFilter();
+                     } else {
+                         alert("Gagal Hapus: Backend belum mendukung fitur hapus.");
+                     }
+                });
+        }
     }
 
     function updateTicker(riwayat) {
@@ -1153,4 +1356,3 @@
   </script>
 </body>
 </html>
-
