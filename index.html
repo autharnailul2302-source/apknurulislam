@@ -837,6 +837,20 @@
       const fullHtml = htmlOptions[0] + htmlMasuk + htmlKeluar + (tambahan ? `<optgroup label="Lainnya">${tambahan}</optgroup>` : '') + '<option value="Lainnya" class="fw-bold text-primary">-- Lainnya (Buat Baru) --</option>';
       select.innerHTML = fullHtml;
       selectEdit.innerHTML = fullHtml.replace('<option value="Lainnya" class="fw-bold text-primary">-- Lainnya (Buat Baru) --</option>', '');
+
+      const rptKat = document.getElementById('rpt_kategori');
+      if(rptKat) {
+          let htmlRpt = '<option value="semua">Semua Kategori</option>';
+          kategoriBawaan.forEach(k => htmlRpt += `<option value="${k.nama}">${k.nama}</option>`);
+          if(Array.isArray(riwayatKats)) {
+              riwayatKats.forEach(k => {
+                  if(!kategoriBawaan.some(b => b.nama === k.nama)) {
+                      htmlRpt += `<option value="${k.nama}">${k.nama}</option>`;
+                  }
+              });
+          }
+          rptKat.innerHTML = htmlRpt;
+      }
     }
 
     function loadDonaturs() {
@@ -1292,6 +1306,12 @@
         const select = document.getElementById('inputDonatur');
         select.innerHTML = '<option value="Hamba Allah">Hamba Allah (Anonim)</option>';
         if(data) data.forEach(d => select.innerHTML += `<option value="${d.nama}">${d.nama}</option>`);
+
+        const rptSelect = document.getElementById('rpt_donatur');
+        if(rptSelect) {
+            rptSelect.innerHTML = '<option value="semua">Semua Donatur</option>';
+            if(data) data.forEach(d => rptSelect.innerHTML += `<option value="${d.nama}">${d.nama}</option>`);
+        }
     }
 
     function cekOpsiKategori(val) {
@@ -1351,7 +1371,18 @@
     function openSubMenu(id) { document.getElementById('dashMenu').classList.add('d-none'); document.querySelectorAll('.sub-menu').forEach(e=>e.classList.add('d-none')); document.getElementById(id).classList.remove('d-none'); if(id==='menuCetak') updateReportForm(); }
     function backToDash() { document.querySelectorAll('.sub-menu').forEach(e=>e.classList.add('d-none')); document.getElementById('dashMenu').classList.remove('d-none'); }
     function toggleFormDonatur() { document.getElementById('formTambahDonatur').classList.toggle('d-none'); }
-    function initReportDropdowns() { }
+    function initReportDropdowns() {
+        const currentYear = new Date().getFullYear();
+        let yearOptions = '';
+        for (let i = 0; i < 5; i++) {
+            const y = currentYear - i;
+            yearOptions += `<option value="${y}">${y}</option>`;
+        }
+        ['rpt_thn_bln', 'rpt_thn_only', 'rpt_inv_thn'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.innerHTML = yearOptions;
+        });
+    }
     function switchReportTab(t) { 
         document.getElementById('viewKeuangan').classList.add('d-none'); document.getElementById('viewInventaris').classList.add('d-none');
         document.getElementById('tab-keuangan').classList.remove('active'); document.getElementById('tab-inventaris').classList.remove('active');
