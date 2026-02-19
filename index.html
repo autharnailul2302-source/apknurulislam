@@ -91,9 +91,12 @@
       margin-top: 10px; padding-top: 10px; border-top: 1px dashed #eee;
       display: flex; justify-content: flex-end; gap: 8px;
     }
-    .trans-masuk { border-left-color: #198754; }
-    .trans-keluar { border-left-color: #dc3545; }
-    .trans-barang { border-left-color: #0dcaf0; } /* Warna Cyan untuk Barang */
+    /* Warna Garis Tepi Transaksi */
+    .trans-masuk { border-left-color: #198754; } /* Hijau (Uang Masuk) */
+    .trans-keluar { border-left-color: #dc3545; } /* Merah (Uang Keluar) */
+    .trans-barang-masuk { border-left-color: #0dcaf0; } /* Biru Cyan (Barang Masuk) */
+    .trans-barang-keluar { border-left-color: #ffc107; } /* Kuning/Oranye (Barang Keluar) */
+
     .tgl-badge { font-size: 0.7rem; background: #eee; padding: 2px 6px; border-radius: 4px; }
 
     /* Admin & Fab */
@@ -137,11 +140,19 @@
     .avatar-char { width: 35px; height: 35px; background: #e9ecef; color: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px; flex-shrink: 0; margin-top: 2px; }
 
     /* Style Khusus Info Barang */
-    .bg-barang { background: linear-gradient(135deg, #e0f7fa, #b2ebf2); border: 1px solid #4dd0e1; }
+    .bg-barang { background: linear-gradient(135deg, #e0f7fa, #fff3cd); border: 1px solid #4dd0e1; }
     
     /* Nav Tabs Custom */
     .nav-tabs .nav-link { color: #6c757d; font-weight: 600; font-size: 0.85rem; }
     .nav-tabs .nav-link.active { color: var(--primary-color); border-bottom: 3px solid var(--primary-color); }
+
+    /* Custom Radio untuk Barang */
+    .btn-check:checked + .btn-outline-primary {
+        background-color: #0dcaf0; border-color: #0dcaf0; color: white;
+    }
+    .btn-check:checked + .btn-outline-warning {
+        background-color: #ffc107; border-color: #ffc107; color: black;
+    }
 
     /* --- STYLE KHUSUS CETAK / PRINT --- */
     @media print {
@@ -252,19 +263,22 @@
       </div>
     </div>
 
-    <!-- Ringkasan Inventaris -->
+    <!-- Ringkasan Inventaris (UPDATED) -->
     <div class="card border-0 shadow-sm mb-4 bg-barang">
       <div class="card-body p-2 d-flex justify-content-between align-items-center">
          <div class="d-flex align-items-center">
             <div class="bg-white rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="width:40px; height:40px">
-                <i class="fas fa-box text-info"></i>
+                <i class="fas fa-boxes text-info"></i>
             </div>
             <div>
-                <div class="label-kecil text-info fw-bold" style="color:#00838f;">Aset / Barang Masuk</div>
+                <div class="label-kecil text-dark fw-bold">Aktivitas Inventaris</div>
                 <div class="small text-muted" style="font-size:0.7rem;">Periode Ini</div>
             </div>
          </div>
-         <div class="fs-4 fw-bold text-dark" id="valBarang">0 Item</div>
+         <div class="text-end">
+             <div class="small fw-bold text-info"><i class="fas fa-arrow-down"></i> Masuk: <span id="valBarangMasuk">0</span></div>
+             <div class="small fw-bold text-warning"><i class="fas fa-arrow-up"></i> Keluar: <span id="valBarangKeluar">0</span></div>
+         </div>
       </div>
     </div>
 
@@ -440,7 +454,7 @@
           </div>
       </div>
 
-      <!-- 3. INPUT TRANSAKSI -->
+      <!-- 3. INPUT TRANSAKSI (UPDATED FOR STOCK OUT) -->
       <div id="menuInput" class="sub-menu d-none">
         <div class="nav-breadcrumb" onclick="backToDash()"><i class="fas fa-arrow-left me-2"></i> Kembali ke Menu</div>
         
@@ -485,18 +499,34 @@
                 </select>
             </div>
             
-            <div id="inputSectionBarang" class="d-none bg-light p-2 rounded border mb-2">
+            <!-- INPUT SECTION BARANG: UPDATED WITH IN/OUT OPTION -->
+            <div id="inputSectionBarang" class="d-none bg-light p-3 rounded border mb-2">
+                <div class="mb-3">
+                    <label class="small text-muted fw-bold d-block mb-1">Status Barang</label>
+                    <div class="btn-group w-100" role="group" aria-label="Status Barang">
+                        <input type="radio" class="btn-check" name="stokOption" id="radioMasuk" value="masuk" checked>
+                        <label class="btn btn-sm btn-outline-primary" for="radioMasuk">
+                            <i class="fas fa-download me-1"></i> Terima (Masuk)
+                        </label>
+                    
+                        <input type="radio" class="btn-check" name="stokOption" id="radioKeluar" value="keluar">
+                        <label class="btn btn-sm btn-outline-warning" for="radioKeluar">
+                            <i class="fas fa-upload me-1"></i> Pakai (Keluar)
+                        </label>
+                    </div>
+                </div>
+
                 <div class="mb-2">
                     <label class="small text-muted fw-bold">Nama Barang / Logistik</label>
                     <input type="text" class="form-control form-control-sm" id="inputNamaBarang" placeholder="Contoh: Air Mineral">
                 </div>
                 <div class="row g-2">
                     <div class="col-6">
-                        <label class="small text-muted">Jumlah</label>
+                        <label class="small text-muted">Jumlah (Satuan)</label>
                         <input type="text" class="form-control form-control-sm" id="inputJmlBarang" placeholder="Contoh: 5 Dus">
                     </div>
                     <div class="col-6">
-                        <label class="small text-muted">Est. Nilai (Rp)</label>
+                        <label class="small text-muted">Est. Nilai (Rp) - Opsional</label>
                         <input type="number" class="form-control form-control-sm" id="inputEstHarga" placeholder="0">
                     </div>
                 </div>
@@ -518,7 +548,6 @@
                     <label class="small fw-bold text-success">DEBET (Masuk)</label>
                     <div class="input-group input-group-sm">
                       <span class="input-group-text bg-success text-white border-success">Rp</span>
-                      <!-- PERBAIKAN: Menghilangkan oninput yang mematikan field -->
                       <input type="number" class="form-control input-debet fw-bold" id="inputDebet" name="debet" placeholder="0" oninput="cekPosisi('debet')">
                     </div>
                   </div>
@@ -526,7 +555,6 @@
                     <label class="small fw-bold text-danger">KREDIT (Keluar)</label>
                     <div class="input-group input-group-sm">
                       <span class="input-group-text bg-danger text-white border-danger">Rp</span>
-                      <!-- PERBAIKAN: Menghilangkan oninput yang mematikan field -->
                       <input type="number" class="form-control input-kredit fw-bold" id="inputKredit" name="kredit" placeholder="0" oninput="cekPosisi('kredit')">
                     </div>
                   </div>
@@ -687,12 +715,11 @@
     // --- KONFIGURASI API UTAMA ---
     const APP_URL = "https://script.google.com/macros/s/AKfycbxcVv8ec4Tvwve7RG0dlP9dPPPPCkIl-M5PuNK5IYenIqTCrGVi5HGlevHL7OAuxbHGlg/exec";
 
-    // FUNGSI PENGHUBUNG (Bridge) - UPDATED FOR ROBUSTNESS
+    // FUNGSI PENGHUBUNG (Bridge)
     function callAPI(action, params = {}, method = 'GET') {
         return new Promise((resolve, reject) => {
             const statusEl = document.getElementById('koneksiStatus');
             
-            // 1. Cek: Internal GAS
             if (typeof google !== 'undefined' && typeof google.script !== 'undefined') {
                 if(statusEl) { statusEl.innerText = "Terhubung: Internal App"; statusEl.className = "badge bg-success"; }
                 google.script.run
@@ -700,7 +727,6 @@
                     .withFailureHandler(reject)
                     [action](params);
             } 
-            // 2. Cek: Eksternal Web App
             else if (APP_URL) {
                 let url = APP_URL;
                 const options = { method: "POST" }; 
@@ -709,7 +735,6 @@
                 options.body = JSON.stringify(payload);
                 options.headers = { "Content-Type": "text/plain;charset=utf-8" };
 
-                // Gunakan fetch dengan penanganan error jaringan yang lebih baik
                 fetch(url, options)
                     .then(response => {
                         if (!response.ok) throw new Error("Network response was not ok: " + response.status);
@@ -721,16 +746,11 @@
                         else resolve(json.result || json); 
                     })
                     .catch(err => {
-                        // WARN saja, jangan ERROR agar console tidak merah
                         console.warn("Koneksi API Gagal/Terblokir, beralih ke Mode Offline.", err);
-                        
                         if(statusEl) { statusEl.innerText = "Mode Offline"; statusEl.className = "badge bg-secondary"; }
-                        
-                        // Reject dengan kode khusus untuk memicu fallback
                         reject("OFFLINE_MODE");
                     });
             } 
-            // 3. Fallback: Offline
             else {
                 reject("OFFLINE_MODE");
             }
@@ -744,12 +764,13 @@
     const curDateStr = today.toISOString().split('T')[0];
     
     let globalDonaturs = [];
-    let globalRiwayat = []; // Menyimpan data riwayat untuk diedit
+    let globalRiwayat = []; 
     
-    // Data Dummy untuk Mode Offline
+    // Data Dummy Offline
     let localTransactions = [
         {tanggal: curDateStr, ket: 'Saldo Awal (Simulasi Mode Offline)', nominal: 1000000, tipe: 'masuk', kategori: 'Kas Awal'},
         {tanggal: curDateStr, ket: 'Infaq Jumat (Contoh)', nominal: 500000, tipe: 'masuk', kategori: 'Infaq Jumat'},
+        {tanggal: curDateStr, ket: '[BARANG MASUK] Air Mineral (5 Dus) - Hamba Allah', nominal: 0, tipe: 'masuk', kategori: 'Barang Masuk'},
         {tanggal: curDateStr, ket: 'Beli Token Listrik (Contoh)', nominal: 100000, tipe: 'keluar', kategori: 'Operasional'}
     ];
     
@@ -757,12 +778,13 @@
       { nama: "Infaq Jumat", grup: "Pemasukan" }, { nama: "Infaq Pembangunan", grup: "Pemasukan" },
       { nama: "Donasi Tetap", grup: "Pemasukan" }, { nama: "Wakaf Tunai", grup: "Pemasukan" },
       { nama: "Operasional Listrik & Air", grup: "Pengeluaran" }, { nama: "Honorarium Marbot", grup: "Pengeluaran" },
-      { nama: "Perlengkapan Kebersihan", grup: "Pengeluaran" }, { nama: "Konsumsi Kegiatan", grup: "Pengeluaran" }
+      { nama: "Perlengkapan Kebersihan", grup: "Pengeluaran" }, { nama: "Konsumsi Kegiatan", grup: "Pengeluaran" },
+      { nama: "Barang Masuk", grup: "Pemasukan" }, { nama: "Pemakaian Barang", grup: "Pengeluaran" }
     ];
 
     window.onload = function() {
       document.getElementById('inputTanggal').value = curDateStr;
-      document.getElementById('inputTglSaldo').value = curDateStr; // Init tgl saldo
+      document.getElementById('inputTglSaldo').value = curDateStr;
       
       const savedUser = localStorage.getItem('mk_user');
       const savedPass = localStorage.getItem('mk_pass');
@@ -787,10 +809,7 @@
     function loadKategoriServer() {
       callAPI('getRiwayatKategori')
         .then(data => renderKategoriDropdown(data))
-        .catch(err => {
-            // Fallback silent
-            renderKategoriDropdown([]); 
-        });
+        .catch(err => { renderKategoriDropdown([]); });
     }
 
     function renderKategoriDropdown(riwayatKats) {
@@ -816,10 +835,7 @@
       }
       
       const fullHtml = htmlOptions[0] + htmlMasuk + htmlKeluar + (tambahan ? `<optgroup label="Lainnya">${tambahan}</optgroup>` : '') + '<option value="Lainnya" class="fw-bold text-primary">-- Lainnya (Buat Baru) --</option>';
-      
       select.innerHTML = fullHtml;
-      
-      // PERBAIKAN: Hapus opsi "Lainnya" dari menu Edit agar tidak error
       selectEdit.innerHTML = fullHtml.replace('<option value="Lainnya" class="fw-bold text-primary">-- Lainnya (Buat Baru) --</option>', '');
     }
 
@@ -831,7 +847,6 @@
             updateDropdownDonatur(data);
         })
         .catch(err => {
-            // Simulasi Offline (Silent)
             globalDonaturs = [{id: 1, nama: "H. Abdullah (Offline)", hp: "081-OFFLINE", alamat: "Mode Offline", catatan: "Data Contoh"}];
             renderListDonatur(globalDonaturs);
             updateDropdownDonatur(globalDonaturs);
@@ -860,7 +875,6 @@
                document.getElementById('formTambahDonatur').querySelector('form').reset();
             })
             .catch(err => {
-               // Fallback Local
                alert("Koneksi Server Gagal: Data donatur tidak tersimpan permanen.");
                toggleFormDonatur();
             })
@@ -869,18 +883,16 @@
             });
     }
 
-    // --- FORM TRANSAKSI ---
+    // --- FORM TRANSAKSI (UPDATED LOGIC) ---
     function handleForm(form) {
       event.preventDefault();
       
-      // Validasi Input
       const isBarang = document.getElementById('switchBarang').checked;
       let valDebet = document.getElementById('inputDebet').value;
       let valKredit = document.getElementById('inputKredit').value;
       
       if(!isBarang && !valDebet && !valKredit) { alert("Isi nominal Debet atau Kredit!"); return; }
 
-      // Cek File
       const fileInput = document.getElementById('inputBukti');
       if (fileInput.files.length > 0 && fileInput.files[0].size > 2 * 1024 * 1024) {
          alert("File max 2MB!"); return;
@@ -889,35 +901,42 @@
       const btn = document.getElementById('btnSimpan');
       btn.disabled = true; btn.innerText = "Mengirim ke Server...";
 
-      // Prepare Data
       const prepareAndSubmit = (fileData) => {
           let nominal = 0;
           let jenis = '';
           let ket = form.keterangan.value;
-          // PERBAIKAN LOGIKA KATEGORI LAIN
           let kat = document.getElementById('selectKategori').value;
 
           if (isBarang) {
+              const statusStok = document.querySelector('input[name="stokOption"]:checked').value; // masuk / keluar
               const nmBrg = document.getElementById('inputNamaBarang').value;
               const jmlBrg = document.getElementById('inputJmlBarang').value;
-              ket = `[BARANG] ${nmBrg} (${jmlBrg}) - ${ket}`;
-              jenis = 'masuk'; // Asset masuk
+              
+              // Format Prefix yang lebih jelas
+              const prefix = statusStok === 'masuk' ? '[BARANG MASUK]' : '[BARANG KELUAR]';
+              
+              ket = `${prefix} ${nmBrg} (${jmlBrg}) - ${ket}`;
+              jenis = statusStok; // 'masuk' atau 'keluar'
+              
+              // Untuk barang keluar, biasanya nilai 0 kecuali ada depresiasi
+              // Untuk barang masuk, nilai bisa 0 (hibah) atau estimasi harga
               nominal = document.getElementById('inputEstHarga').value || 0;
+              
+              // Jika kategori kosong/tidak sesuai, set default
+              if(!kat) kat = statusStok === 'masuk' ? 'Barang Masuk' : 'Pemakaian Barang';
+              
           } else {
               if (valDebet) { nominal = valDebet; jenis = 'masuk'; }
               else { nominal = valKredit; jenis = 'keluar'; }
           }
 
-          // PERBAIKAN: Validasi ketat untuk input "Lainnya"
           if (kat === 'Lainnya') {
               const katLain = document.getElementById('inputKategoriLain').value.trim();
-              if(katLain) {
-                  kat = katLain;
-              } else {
+              if(katLain) kat = katLain;
+              else {
                   alert("Nama Kategori Lainnya wajib diisi!");
-                  btn.disabled = false;
-                  btn.innerText = "POSTING JURNAL";
-                  return; // Stop process
+                  btn.disabled = false; btn.innerText = "POSTING JURNAL";
+                  return; 
               }
           }
           
@@ -941,19 +960,14 @@
             .then(res => {
                 alert(res.message || "Berhasil Disimpan!");
                 form.reset();
-                // Reset manual untuk elemen yang tidak ter-reset otomatis
                 document.getElementById('inputTanggal').value = curDateStr;
-                document.getElementById('areaKategoriLain').classList.add('d-none'); // Sembunyikan lagi
-                
-                // PERBAIKAN: Reload kategori agar yang baru langsung muncul
+                document.getElementById('areaKategoriLain').classList.add('d-none');
                 loadKategoriServer();
-                
-                applyFilter(); // Refresh Data
+                applyFilter(); 
                 backToDash();
             })
             .catch(err => {
                 if(err === "OFFLINE_MODE") {
-                    // Simpan Lokal untuk Demo
                     localTransactions.push({
                         tanggal: formData.tanggal, 
                         ket: formData.keterangan, 
@@ -961,7 +975,7 @@
                         tipe: formData.jenis
                     });
                     
-                    alert("Mode Offline: Data disimpan secara LOKAL SEMENTARA (Akan hilang jika di-refresh).");
+                    alert("Mode Offline: Data disimpan secara LOKAL SEMENTARA.");
                     form.reset();
                     applyFilter();
                     backToDash();
@@ -1008,30 +1022,24 @@
       callAPI('getLaporanFiltered', filter)
         .then(renderData)
         .catch(err => {
-            // Simulasi Render Offline (Smooth Fallback)
             console.log("Rendering Offline Data...");
             setTimeout(() => {
                 let saldo = 0, masuk = 0, keluar = 0;
-                // Hitung dari localTransactions
-                let data = JSON.parse(JSON.stringify(localTransactions)).reverse(); // Clone & Reverse
+                let data = JSON.parse(JSON.stringify(localTransactions)).reverse();
                 
                 data.forEach(t => {
                    if(t.tipe === 'masuk') { saldo += t.nominal; masuk += t.nominal; }
                    else { saldo -= t.nominal; keluar += t.nominal; }
                 });
-                
                 renderData({saldoTotal: saldo, masukPeriode: masuk, keluarPeriode: keluar, riwayat: data});
-            }, 300); // Sedikit delay agar loading terasa
+            }, 300);
         });
     }
 
-    // --- RENDER & UTILS ---
     const formatRupiah = (n) => new Intl.NumberFormat('id-ID', {style:'currency', currency:'IDR', minimumFractionDigits:0}).format(n);
 
     function renderData(data) {
       document.getElementById('loading').style.display = 'none';
-      
-      // Simpan global untuk keperluan edit
       globalRiwayat = data.riwayat || [];
 
       document.getElementById('headerSaldo').innerText = "Total Saldo: " + formatRupiah(data.saldoTotal);
@@ -1043,44 +1051,65 @@
       elSelisih.innerText = formatRupiah(selisih);
       elSelisih.className = selisih >= 0 ? "fw-bold text-success" : "fw-bold text-danger";
 
-      // Cek Login Status untuk menampilkan tombol edit
       const user = localStorage.getItem('mk_user');
       const token = localStorage.getItem('mk_token');
-      const isLoggedIn = user && token; // Cek user DAN token
+      const isLoggedIn = user && token;
 
-      // Update status mode di footer
       const statusEl = document.getElementById('koneksiStatus');
-      // Pastikan statusEl ada sebelum memanipulasi
-      if(statusEl) {
-        if(isLoggedIn) {
-            // Cek apakah sudah ada badge admin sebelumnya untuk menghindari duplikasi
-            if(!statusEl.querySelector('.mode-admin-badge')) {
-               statusEl.innerHTML += ' <span class="text-warning fw-bold border-start ps-2 ms-2 mode-admin-badge">Mode Admin</span>';
-            }
-        }
+      if(statusEl && isLoggedIn && !statusEl.querySelector('.mode-admin-badge')) {
+           statusEl.innerHTML += ' <span class="text-warning fw-bold border-start ps-2 ms-2 mode-admin-badge">Mode Admin</span>';
       }
 
       let html = '';
-      let countBarang = 0;
+      let countBarangMasuk = 0;
+      let countBarangKeluar = 0;
       
       if(!data.riwayat || data.riwayat.length === 0) {
         html = '<div class="text-center text-muted py-4 small">Tidak ada transaksi.</div>';
       } else {
         data.riwayat.forEach((item, index) => {
-          const isBarang = item.ket.includes('[BARANG]');
-          if(isBarang) countBarang++;
+          // Detect Jenis Transaksi Barang
+          const isBarangMasuk = item.ket.includes('[BARANG MASUK]');
+          const isBarangKeluar = item.ket.includes('[BARANG KELUAR]');
+          const isBarang = isBarangMasuk || isBarangKeluar || item.ket.includes('[BARANG]'); // Legacy check
+          
+          if(isBarangMasuk) countBarangMasuk++;
+          if(isBarangKeluar) countBarangKeluar++;
+          
           const isMasuk = item.tipe === 'masuk';
           
-          let borderClass = isBarang ? 'trans-barang' : (isMasuk ? 'trans-masuk' : 'trans-keluar');
-          let nominalClass = isBarang ? 'text-info' : (isMasuk ? 'text-success' : 'text-danger');
-          let nominalText = isBarang 
-              ? (item.nominal > 0 ? formatRupiah(item.nominal) : 'Aset Non-Tunai') 
-              : ((isMasuk ? '+' : '-') + ' ' + formatRupiah(Math.abs(item.nominal)));
-          
-          let displayKet = isBarang ? item.ket.replace('[BARANG]', '').trim() : item.ket;
-          let icon = isBarang ? '<i class="fas fa-box text-info me-1"></i> ' : '';
+          let borderClass = '';
+          let nominalClass = '';
+          let nominalText = '';
+          let icon = '';
 
-          // Tombol Edit (Hanya jika Login)
+          if (isBarang) {
+              if (isBarangKeluar) {
+                  borderClass = 'trans-barang-keluar';
+                  nominalClass = 'text-warning'; // Kuning gelap
+                  nominalText = 'Pemakaian Aset';
+                  icon = '<i class="fas fa-box-open text-warning me-1"></i> ';
+              } else {
+                  // Barang Masuk (Default)
+                  borderClass = 'trans-barang-masuk';
+                  nominalClass = 'text-info'; // Cyan
+                  nominalText = item.nominal > 0 ? formatRupiah(item.nominal) : 'Aset Masuk';
+                  icon = '<i class="fas fa-box text-info me-1"></i> ';
+              }
+          } else {
+              // Uang
+              borderClass = isMasuk ? 'trans-masuk' : 'trans-keluar';
+              nominalClass = isMasuk ? 'text-success' : 'text-danger';
+              nominalText = (isMasuk ? '+' : '-') + ' ' + formatRupiah(Math.abs(item.nominal));
+          }
+          
+          // Bersihkan text display
+          let displayKet = item.ket
+              .replace('[BARANG MASUK]', '')
+              .replace('[BARANG KELUAR]', '')
+              .replace('[BARANG]', '')
+              .trim();
+
           let actionButtons = '';
           if(isLoggedIn) {
              actionButtons = `
@@ -1102,7 +1131,7 @@
                     <div class="fw-bold text-dark mt-1 text-truncate">${icon}${displayKet}</div>
                   </div>
                   <div class="text-end" style="width: 35%">
-                    <div class="fw-bold ${nominalClass}" style="font-size:0.9rem">${nominalText}</div>
+                    <div class="fw-bold ${nominalClass}" style="font-size:0.85rem">${nominalText}</div>
                   </div>
               </div>
               ${actionButtons}
@@ -1110,7 +1139,8 @@
         });
       }
       document.getElementById('listRiwayat').innerHTML = html;
-      document.getElementById('valBarang').innerText = countBarang + " Item";
+      document.getElementById('valBarangMasuk').innerText = countBarangMasuk;
+      document.getElementById('valBarangKeluar').innerText = countBarangKeluar;
       updateTicker(data.riwayat || []);
     }
 
@@ -1119,20 +1149,17 @@
         const item = globalRiwayat[index];
         if(!item) return;
 
-        // Populate Form
         document.getElementById('editIndex').value = index;
-        document.getElementById('editOriginalId').value = item.id || ""; // Backup jika backend support ID
+        document.getElementById('editOriginalId').value = item.id || ""; 
         document.getElementById('editTanggal').value = item.tanggal;
         document.getElementById('editKategori').value = item.kategori;
         document.getElementById('editKeterangan').value = item.ket;
         document.getElementById('editNominal').value = item.nominal;
         
-        // Atur label nominal
         const lbl = document.getElementById('labelEditNominal');
         lbl.innerText = item.tipe === 'masuk' ? "Nominal (Pemasukan)" : "Nominal (Pengeluaran)";
         lbl.className = item.tipe === 'masuk' ? "small fw-bold text-success" : "small fw-bold text-danger";
 
-        // Tampilkan Modal
         document.getElementById('modalEdit').style.display = 'flex';
     }
 
@@ -1145,48 +1172,39 @@
         const idx = document.getElementById('editIndex').value;
         const itemLama = globalRiwayat[idx];
         
-        // Data Baru
         const newData = {
             username: localStorage.getItem('mk_user'),
             token: localStorage.getItem('mk_token'),
-            // Identifikasi baris (Logic backend harus diupdate untuk menerima ini)
             original_date: itemLama.tanggal, 
             original_ket: itemLama.ket,
-            
-            // Data Update
             tanggal: document.getElementById('editTanggal').value,
             kategori: document.getElementById('editKategori').value,
             keterangan: document.getElementById('editKeterangan').value,
             nominal: parseInt(document.getElementById('editNominal').value),
-            tipe: itemLama.tipe // Tipe (masuk/keluar) biasanya tetap, kecuali fitur ubah tipe ditambahkan
+            tipe: itemLama.tipe 
         };
 
         if(confirm("Yakin ingin mengubah data ini?")) {
             const btn = e.target.querySelector('button[type="submit"]');
             btn.disabled = true; btn.innerText = "Mengupdate...";
 
-            callAPI('editTransaksi', newData) // Pastikan backend punya action 'editTransaksi'
+            callAPI('editTransaksi', newData) 
                 .then(res => {
                     alert("Data Berhasil Diupdate!");
                     tutupEdit();
                     applyFilter();
                 })
                 .catch(err => {
-                    // Fallback Offline Simulasi
                      if(err === "OFFLINE_MODE" || err.toString().includes("ScriptError")) {
-                        alert("Mode Demo: Data berhasil diubah di tampilan saja (Refresh akan mereset).");
-                        // Update lokal
+                        alert("Mode Demo: Data berhasil diubah di tampilan saja.");
                         globalRiwayat[idx].tanggal = newData.tanggal;
                         globalRiwayat[idx].kategori = newData.kategori;
                         globalRiwayat[idx].ket = newData.keterangan;
                         globalRiwayat[idx].nominal = newData.nominal;
-                        
-                        // Re-render manual
-                        // Hacky re-render filtered data logic here or just applyFilter
                         tutupEdit();
                         applyFilter();
                     } else {
-                        alert("Gagal Edit: Backend belum mendukung fitur edit. Mohon update script backend Anda.");
+                        alert("Gagal Edit: Backend belum mendukung fitur edit.");
                     }
                 })
                 .finally(() => {
@@ -1196,7 +1214,7 @@
     }
 
     function hapusData(index, id) {
-        if(confirm("PERINGATAN: Yakin hapus transaksi ini? Data tidak bisa dikembalikan.")) {
+        if(confirm("PERINGATAN: Yakin hapus transaksi ini?")) {
             const item = globalRiwayat[index];
             const payload = {
                 username: localStorage.getItem('mk_user'),
@@ -1214,10 +1232,10 @@
                 .catch(err => {
                      if(err === "OFFLINE_MODE" || err.toString().includes("ScriptError")) {
                          alert("Mode Demo: Data dihapus dari tampilan.");
-                         localTransactions.splice(index, 1); // Hapus dummy
+                         localTransactions.splice(index, 1);
                          applyFilter();
                      } else {
-                         alert("Gagal Hapus: Backend belum mendukung fitur hapus.");
+                         alert("Gagal Hapus: Backend error.");
                      }
                 });
         }
@@ -1276,11 +1294,9 @@
         if(data) data.forEach(d => select.innerHTML += `<option value="${d.nama}">${d.nama}</option>`);
     }
 
-    // PERBAIKAN: Menambahkan reset status disabled pada kolom uang
     function cekOpsiKategori(val) {
         const areaDonatur = document.getElementById('areaDonatur');
         
-        // Reset Status Input Uang (PENTING)
         document.getElementById('inputDebet').disabled = false;
         document.getElementById('inputKredit').disabled = false;
         
@@ -1303,20 +1319,10 @@
         }
     }
 
-    // PERBAIKAN LOGIKA PENGUCIAN: Tidak lagi mematikan field, hanya membersihkan
     function cekPosisi(mode) {
       const d = document.getElementById('inputDebet'), k = document.getElementById('inputKredit');
-      
-      // Jika ketik di Debet, bersihkan Kredit (tapi jangan matikan)
-      if (mode === 'debet' && d.value !== '') { 
-          k.value = ''; 
-          k.disabled = false; 
-      }
-      // Jika ketik di Kredit, bersihkan Debet (tapi jangan matikan)
-      else if (mode === 'kredit' && k.value !== '') { 
-          d.value = ''; 
-          d.disabled = false; 
-      }
+      if (mode === 'debet' && d.value !== '') { k.value = ''; k.disabled = false; }
+      else if (mode === 'kredit' && k.value !== '') { d.value = ''; d.disabled = false; }
     }
 
     // --- LOGIN/NAV SYSTEM ---
@@ -1345,7 +1351,7 @@
     function openSubMenu(id) { document.getElementById('dashMenu').classList.add('d-none'); document.querySelectorAll('.sub-menu').forEach(e=>e.classList.add('d-none')); document.getElementById(id).classList.remove('d-none'); if(id==='menuCetak') updateReportForm(); }
     function backToDash() { document.querySelectorAll('.sub-menu').forEach(e=>e.classList.add('d-none')); document.getElementById('dashMenu').classList.remove('d-none'); }
     function toggleFormDonatur() { document.getElementById('formTambahDonatur').classList.toggle('d-none'); }
-    function initReportDropdowns() { /* Init dropdon logic similar to original */ }
+    function initReportDropdowns() { }
     function switchReportTab(t) { 
         document.getElementById('viewKeuangan').classList.add('d-none'); document.getElementById('viewInventaris').classList.add('d-none');
         document.getElementById('tab-keuangan').classList.remove('active'); document.getElementById('tab-inventaris').classList.remove('active');
@@ -1359,15 +1365,12 @@
         if(t==='tahunan') document.getElementById('filterTahun').classList.remove('d-none');
         if(t.includes('kategori')) { document.getElementById('filterKategori').classList.remove('d-none'); if(t.includes('bulan')) document.getElementById('filterBulan').classList.remove('d-none'); else document.getElementById('filterTahun').classList.remove('d-none'); }
         if(t==='donatur') { document.getElementById('filterDonatur').classList.remove('d-none'); document.getElementById('filterTahun').classList.remove('d-none'); }
-        // Populate dropdowns logic here...
     }
     function generateReportPreview() { document.getElementById('reportPreviewArea').innerHTML = '<div class="text-center text-info small">Preview akan muncul di sini (Simulasi).</div>'; }
     function generateInventoryPreview() { document.getElementById('reportPreviewArea').innerHTML = '<div class="text-center text-info small">List Barang (Simulasi).</div>'; }
     
-    // FUNGSI HANDLE KAS AWAL YANG DIPERBAIKI
     function handleKasAwal(e) {
         e.preventDefault();
-        
         const tgl = document.getElementById('inputTglSaldo').value;
         const jml = document.getElementById('inputJmlSaldo').value;
         const user = document.getElementById('hiddenUser').value || 'Bendahara';
@@ -1392,9 +1395,8 @@
         callAPI('prosesInput', data)
             .then(res => {
                 alert("Saldo Awal Berhasil Disimpan!");
-                // Reset form jika perlu
                 document.getElementById('inputJmlSaldo').value = "";
-                applyFilter(); // Refresh dashboard agar saldo berubah
+                applyFilter(); 
                 backToDash();
             })
             .catch(err => {
