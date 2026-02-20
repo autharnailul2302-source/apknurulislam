@@ -964,8 +964,39 @@
 
     // --- LOGIKA UNTUK PREVIEW LAPORAN KEUANGAN ---
     function generateReportPreview() {
+        const btn = event.currentTarget || document.querySelector('#reportFilters button');
+        const originalText = btn ? btn.innerHTML : '<i class="fas fa-sync me-1"></i> Tampilkan Preview';
+        if(btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Memuat Data...'; btn.disabled = true; }
+
         const t = document.getElementById('reportType').value;
-        let data = globalRiwayat || []; 
+        let apiFilter = { jenis: 'tahunan' };
+        
+        if (t === 'bulanan' || t === 'kategori_bulan') {
+            apiFilter = { 
+                jenis: 'bulanan', 
+                bln: parseInt(document.getElementById('rpt_bln').value),
+                thn: parseInt(document.getElementById('rpt_thn_bln').value) 
+            };
+        } else {
+            apiFilter = {
+                jenis: 'tahunan',
+                thn: parseInt(document.getElementById('rpt_thn_only').value || document.getElementById('rpt_thn_bln').value)
+            };
+        }
+
+        callAPI('getLaporanFiltered', apiFilter)
+        .then(res => {
+            renderReportHTML(res.riwayat || [], t);
+        })
+        .catch(err => {
+            renderReportHTML(JSON.parse(JSON.stringify(localTransactions)), t);
+        })
+        .finally(() => {
+            if(btn) { btn.innerHTML = originalText; btn.disabled = false; }
+        });
+    }
+
+    function renderReportHTML(data, t) {
         let filtered = [];
         let title = "LAPORAN KEUANGAN";
         let periodText = "";
@@ -1077,12 +1108,12 @@
                     <div class="col-6">
                         <br>Mengetahui,<br><b>Ketua Takmir</b>
                         <br><br><br><br>
-                        ( ...................................... )
+                        ( Ust. Fauzan Munmar )
                     </div>
                     <div class="col-6">
-                        Tuban, ${new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}<br><b>Bendahara</b>
+                        Lamongan, ${new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}<br><b>Bendahara</b>
                         <br><br><br><br>
-                        ( ...................................... )
+                        ( Nailul Authar)
                     </div>
                 </div>
             </div>
@@ -1092,9 +1123,25 @@
 
     // --- LOGIKA UNTUK PREVIEW INVENTARIS ---
     function generateInventoryPreview() {
-        const y = document.getElementById('rpt_inv_thn').value;
-        let data = globalRiwayat || [];
+        const btn = event.currentTarget || document.querySelector('#viewInventaris button');
+        const originalText = btn ? btn.innerHTML : '<i class="fas fa-box-open me-1"></i> Cek Aset Barang';
+        if(btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Memuat Data...'; btn.disabled = true; }
+
+        const y = parseInt(document.getElementById('rpt_inv_thn').value);
         
+        callAPI('getLaporanFiltered', { jenis: 'tahunan', thn: y })
+        .then(res => {
+            renderInventoryHTML(res.riwayat || [], y);
+        })
+        .catch(err => {
+            renderInventoryHTML(JSON.parse(JSON.stringify(localTransactions)), y);
+        })
+        .finally(() => {
+            if(btn) { btn.innerHTML = originalText; btn.disabled = false; }
+        });
+    }
+
+    function renderInventoryHTML(data, y) {
         let filtered = data.filter(item => {
             const d = new Date(item.tanggal);
             return d.getFullYear() == y && (item.ket.includes('[BARANG MASUK]') || item.ket.includes('[BARANG KELUAR]'));
