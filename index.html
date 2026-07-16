@@ -8,135 +8,266 @@
   
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
   
   <!-- Library untuk Download PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
+    /* ============================================================
+       DESIGN TOKENS — konsep "Buku Kas" (ledger book fisik)
+       ============================================================ */
     :root {
-      --primary-color: #0f5132;
-      --accent-color: #198754;
-      --bg-color: #f0f2f5;
+      --ink: #232E29;
+      --petrol: #123832;
+      --petrol-deep: #0B2622;
+      --petrol-soft: #E7EEEB;
+      --brass: #B8862E;
+      --brass-light: #E3C179;
+      --paper: #F2EEE1;
+      --paper-raised: #FFFFFF;
+      --rule: #DCD5C2;
+      --jade: #2E7D5B;
+      --jade-soft: #E5F1EA;
+      --brick: #A8442E;
+      --brick-soft: #F5E6E1;
+      --info: #2E6E8E;
+      --info-soft: #E3EFF3;
+      --muted: #8A8172;
     }
-    body { font-family: 'Poppins', sans-serif; background-color: var(--bg-color); padding-bottom: 80px; }
-    
-    /* Header Compact */
+
+    * { -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--petrol-deep);
+      color: var(--ink);
+      padding-bottom: 90px;
+    }
+
+    .font-display { font-family: 'Fraunces', serif; }
+    .mono, .tgl-badge, .angka-besar, #headerSaldo, #valMasuk, #valKeluar, #valSelisih,
+    #inputDebet, #inputKredit, #editNominal, #inputJmlSaldo, #inputEstHarga {
+      font-family: 'IBM Plex Mono', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* App shell — buku kas di atas "meja" gelap, biar tetap enak dilihat di layar lebar */
+    #mainAppView, #adminSection, .fab, .custom-modal-overlay, .bottom-nav {
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .custom-modal-overlay .custom-modal-content { margin-left: auto; margin-right: auto; }
+    .fab { right: calc(50% - 240px + 20px); bottom: 78px; }
+    @media (max-width: 520px) { .fab { right: 20px; } }
+
+    /* Bottom Navigation — tab publik (Buku Kas / Profil / Kegiatan) */
+    .bottom-nav {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
+      background: var(--petrol-deep); border-top: 1px solid var(--brass);
+      display: flex; box-shadow: 0 -4px 16px rgba(0,0,0,0.3);
+    }
+    .bottom-nav-item {
+      flex: 1; text-align: center; padding: 9px 4px 8px 4px; cursor: pointer;
+      color: rgba(242,238,225,0.55); font-size: 0.66rem; font-weight: 700;
+      letter-spacing: 0.3px; border-top: 2px solid transparent; user-select: none;
+    }
+    .bottom-nav-item i { display: block; font-size: 1.05rem; margin-bottom: 3px; color: inherit; }
+    .bottom-nav-item.active { color: var(--brass-light); border-top-color: var(--brass); }
+
+    #mainAppView { background: var(--paper); min-height: 100vh; box-shadow: 0 0 60px rgba(0,0,0,0.35); }
+
+    /* Header / "sampul buku" */
     .masjid-header {
-      background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-      color: white; padding: 1.5rem 1rem 3rem 1rem;
-      border-radius: 0 0 25px 25px; text-align: center;
+      background: linear-gradient(160deg, var(--petrol), var(--petrol-deep));
+      color: var(--paper);
+      padding: 1.75rem 1.25rem 1.5rem 1.25rem;
+      text-align: center;
       position: relative;
-      z-index: 1;
+      border-bottom: 3px double var(--brass);
     }
-    
-    /* Running Text Ticker (Sticky Style) */
+    .masjid-header .cover-icon {
+      width: 46px; height: 46px; margin: 0 auto 0.6rem auto;
+      border: 1px solid var(--brass-light); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--brass-light); font-size: 1.1rem;
+    }
+    .masjid-header h5 { font-family: 'Fraunces', serif; font-weight: 600; letter-spacing: 0.3px; font-size: 1.15rem; }
+    .masjid-header .cover-caption { font-size: 0.68rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--brass-light); opacity: 0.9; display: block; margin-top: 0.6rem; }
+    .masjid-header #headerSaldo { display: block; font-size: 1.35rem; font-weight: 600; margin-top: 0.15rem; letter-spacing: 0.5px; }
+
+    /* Running text — "pita kuningan" tipis, tanpa hack negative-margin */
     .ticker-container {
-      background: #212529; width: 100%; height: 35px; overflow: hidden; position: relative;
-      margin-top: -25px; margin-bottom: 10px; z-index: 2;
-      border-bottom: 3px solid #ffc107; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      background: var(--petrol-deep); width: 100%; height: 32px; overflow: hidden; position: relative;
+      border-bottom: 1px solid var(--brass);
     }
-    .ticker-wrapper {
-      display: inline-block; white-space: nowrap; padding-left: 100%;
-      animation: ticker-scroll 25s linear infinite;
-    }
-    .ticker-item {
-      display: inline-block; padding: 0 20px; font-size: 0.85rem; color: white; line-height: 35px;
-    }
-    .ticker-item i { color: #ffc107; margin-right: 5px; }
-    
+    .ticker-wrapper { display: inline-block; white-space: nowrap; padding-left: 100%; animation: ticker-scroll 25s linear infinite; }
+    .ticker-item { display: inline-block; padding: 0 20px; font-size: 0.78rem; color: var(--brass-light); line-height: 32px; }
+    .ticker-item i { color: var(--brass-light); margin-right: 5px; }
     @keyframes ticker-scroll { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
     /* Filter Bar */
     .filter-card {
-      background: white; border-radius: 15px; margin: 0 15px 15px 15px; padding: 15px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; z-index: 10;
+      background: var(--paper-raised); border-radius: 4px; margin: 15px 15px 15px 15px; padding: 14px;
+      border: 1px solid var(--rule); position: relative; z-index: 10;
     }
+    .filter-card .form-select, .filter-card .form-control { border-color: var(--rule); }
 
-    /* Info Cards */
-    .info-box { background: white; border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 10px; }
-    .label-kecil { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #888; }
-    .angka-besar { font-weight: 700; font-size: 1.2rem; color: #333; }
+    /* Kotak ringkasan — kolom ledger, dipisah garis tipis, bukan kartu-kartu terpisah */
+    .ledger-summary { background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; margin-bottom: 10px; }
+    .ledger-summary .row.g-0 > div { padding: 14px 10px; text-align: center; }
+    .ledger-summary .row.g-0 > div:first-child { border-right: 1px solid var(--rule); }
+    .label-kecil { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); font-weight: 600; }
+    .angka-besar { font-weight: 600; font-size: 1.15rem; color: var(--ink); display: block; margin-top: 2px; }
+    .ledger-selisih { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-top: 1px solid var(--rule); background: var(--petrol-soft); }
 
     /* List Transaksi & Scrollbar Custom */
-    #listRiwayat {
-      max-height: 55vh; /* Batasi tinggi maksimal agar bisa di-scroll */
-      overflow-y: auto;
-      padding-right: 5px;
-      padding-bottom: 10px;
-      margin-bottom: 15px;
-    }
-    /* Desain Scrollbar Tipis */
-    #listRiwayat::-webkit-scrollbar {
-      width: 5px;
-    }
-    #listRiwayat::-webkit-scrollbar-track {
-      background: #e9ecef; 
-      border-radius: 10px;
-    }
-    #listRiwayat::-webkit-scrollbar-thumb {
-      background: #adb5bd; 
-      border-radius: 10px;
-    }
-    #listRiwayat::-webkit-scrollbar-thumb:hover {
-      background: #6c757d; 
-    }
+    #listRiwayat { max-height: 55vh; overflow-y: auto; padding-right: 5px; padding-bottom: 6px; margin-bottom: 15px; }
+    #listRiwayat::-webkit-scrollbar { width: 5px; }
+    #listRiwayat::-webkit-scrollbar-track { background: var(--paper); border-radius: 10px; }
+    #listRiwayat::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 10px; }
+    #listRiwayat::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
-    .trans-item { background: white; border-radius: 10px; padding: 12px; margin-bottom: 8px; border-left: 4px solid #ccc; position: relative; }
+    /* Baris ledger — garis penggaris, bukan kartu melayang */
+    .trans-item { background: var(--paper-raised); border-radius: 0; padding: 10px 12px; margin-bottom: 0; border-bottom: 1px solid var(--rule); border-left: 3px solid #ccc; position: relative; }
+    .trans-item:first-child { border-top: 1px solid var(--rule); }
     .trans-content { display: flex; justify-content: space-between; align-items: center; }
-    .trans-actions { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #eee; display: flex; justify-content: flex-end; gap: 8px; }
-    .trans-masuk { border-left-color: #198754; } 
-    .trans-keluar { border-left-color: #dc3545; } 
-    .trans-barang-masuk { border-left-color: #0dcaf0; } 
-    .trans-barang-keluar { border-left-color: #ffc107; } 
+    .trans-actions { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--rule); display: flex; justify-content: flex-end; gap: 8px; }
+    .trans-masuk { border-left-color: var(--jade); }
+    .trans-keluar { border-left-color: var(--brick); }
+    .trans-barang-masuk { border-left-color: var(--info); }
+    .trans-barang-keluar { border-left-color: var(--brass); }
 
-    .tgl-badge { font-size: 0.7rem; background: #eee; padding: 2px 6px; border-radius: 4px; }
+    .tgl-badge { font-size: 0.68rem; background: var(--paper); color: var(--muted); padding: 2px 6px; border-radius: 3px; border: 1px solid var(--rule); }
 
     /* Admin & Fab */
-    #adminSection { display: none; background: white; padding: 20px; border-radius: 15px; margin: 20px 15px; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); border-top: 5px solid var(--accent-color); }
-    .fab { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; background-color: var(--primary-color); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 100; }
-    .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; justify-content: center; align-items: center; z-index: 9999; }
-    
+    #adminSection { display: none; background: var(--paper-raised); padding: 20px; border-radius: 4px 4px 0 0; margin: 20px auto 0 auto; box-shadow: 0 -10px 30px rgba(0,0,0,0.35); border-top: 3px double var(--brass); }
+    .fab { position: fixed; bottom: 20px; width: 54px; height: 54px; background: var(--petrol); border: 2px solid var(--brass); border-radius: 50%; color: var(--brass-light); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,0.4); cursor: pointer; z-index: 100; }
+    .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18,56,50,0.92); display: flex; justify-content: center; align-items: center; z-index: 9999; color: var(--paper); }
+    .loading-overlay .spinner-border { color: var(--brass-light) !important; }
+    .loading-overlay .small { color: var(--paper); opacity: 0.85; }
+
     /* Edit Modal Overlay */
-    .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; justify-content: center; align-items: flex-end; }
-    .custom-modal-content { background: white; width: 100%; max-width: 500px; border-radius: 20px 20px 0 0; padding: 25px; animation: slideUp 0.3s ease-out; max-height: 90vh; overflow-y: auto; }
+    .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11,38,34,0.6); z-index: 2000; display: none; justify-content: center; align-items: flex-end; }
+    .custom-modal-content { background: var(--paper-raised); width: 100%; max-width: 480px; border-radius: 14px 14px 0 0; padding: 25px; animation: slideUp 0.3s ease-out; max-height: 90vh; overflow-y: auto; border-top: 3px double var(--brass); }
     @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-    /* Style Khusus Form Keuangan Baru */
-    .input-debet { border-color: #198754 !important; background-color: #f0fff4 !important; }
-    .input-kredit { border-color: #dc3545 !important; background-color: #fff5f5 !important; }
-    .input-debet:focus { box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25) !important; }
-    .input-kredit:focus { box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25) !important; }
+    /* Style Khusus Form Keuangan */
+    .input-debet { border-color: var(--jade) !important; background-color: var(--jade-soft) !important; }
+    .input-kredit { border-color: var(--brick) !important; background-color: var(--brick-soft) !important; }
+    .input-debet:focus { box-shadow: 0 0 0 0.2rem rgba(46, 125, 91, 0.2) !important; }
+    .input-kredit:focus { box-shadow: 0 0 0 0.2rem rgba(168, 68, 46, 0.2) !important; }
 
-    /* Style Dashboard Menu Grid */
-    .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; }
-    .menu-item { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px 10px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
-    .menu-item:hover { background: white; border-color: var(--accent-color); box-shadow: 0 5px 15px rgba(0,0,0,0.08); transform: translateY(-3px); }
-    .menu-item i { font-size: 2rem; margin-bottom: 10px; display: block; }
-    .menu-item span { font-size: 0.8rem; font-weight: 600; color: #444; display: block; line-height: 1.2; }
-    
-    .nav-breadcrumb { display: flex; align-items: center; margin-bottom: 15px; cursor: pointer; color: #666; font-size: 0.9rem; font-weight: 600; }
-    .nav-breadcrumb:hover { color: var(--primary-color); }
+    /* Menu utama — daftar isi ledger (bukan grid ikon 2 kolom yang timpang) */
+    .dash-index { border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; margin-top: 10px; }
+    .index-row { display: flex; align-items: center; gap: 12px; padding: 14px 14px; cursor: pointer; transition: background 0.15s; border-bottom: 1px solid var(--rule); background: var(--paper-raised); }
+    .index-row:last-child { border-bottom: none; }
+    .index-row:hover, .index-row:focus-visible { background: var(--petrol-soft); outline: none; }
+    .index-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; flex-shrink: 0; }
+    .index-text { flex: 1; }
+    .index-text .idx-title { font-weight: 700; font-size: 0.9rem; color: var(--ink); display: block; }
+    .index-text .idx-sub { font-size: 0.72rem; color: var(--muted); }
+    .index-row .chev { color: var(--rule); }
 
-    .donatur-item { background: white; border:1px solid #eee; border-radius: 8px; padding: 10px; margin-bottom: 8px; display: flex; align-items: flex-start; }
-    .avatar-char { width: 35px; height: 35px; background: #e9ecef; color: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px; flex-shrink: 0; margin-top: 2px; }
+    .nav-breadcrumb { display: flex; align-items: center; margin-bottom: 15px; cursor: pointer; color: var(--muted); font-size: 0.85rem; font-weight: 700; }
+    .nav-breadcrumb:hover { color: var(--petrol); }
 
-    .bg-barang { background: linear-gradient(135deg, #e0f7fa, #fff3cd); border: 1px solid #4dd0e1; }
-    .nav-tabs .nav-link { color: #6c757d; font-weight: 600; font-size: 0.85rem; }
-    .nav-tabs .nav-link.active { color: var(--primary-color); border-bottom: 3px solid var(--primary-color); }
-    .btn-check:checked + .btn-outline-primary { background-color: #0dcaf0; border-color: #0dcaf0; color: white; }
-    .btn-check:checked + .btn-outline-warning { background-color: #ffc107; border-color: #ffc107; color: black; }
+    .donatur-item { background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 6px; padding: 10px; margin-bottom: 8px; display: flex; align-items: flex-start; }
+    .avatar-char { width: 35px; height: 35px; background: var(--petrol-soft); color: var(--petrol); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; margin-right: 10px; flex-shrink: 0; margin-top: 2px; font-family: 'Fraunces', serif; }
+
+    /* --- PROFIL MUSHOLLA & PENGURUS (publik) --- */
+    .profil-card { background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
+    .profil-cover { background: linear-gradient(160deg, var(--petrol), var(--petrol-deep)); padding: 22px 16px; text-align: center; border-bottom: 3px double var(--brass); }
+    .profil-cover img.profil-logo { width: 64px; height: 64px; object-fit: contain; background: var(--paper); border-radius: 50%; padding: 6px; border: 1px solid var(--brass-light); margin-bottom: 8px; }
+    .profil-cover h5 { color: var(--paper); margin-bottom: 2px; }
+    .profil-cover .profil-alamat { color: var(--brass-light); font-size: 0.75rem; }
+    .profil-body { padding: 14px 16px; }
+    .profil-body .row-info { display: flex; padding: 6px 0; border-bottom: 1px dashed var(--rule); font-size: 0.82rem; }
+    .profil-body .row-info:last-child { border-bottom: none; }
+    .profil-body .row-info .li { width: 40%; color: var(--muted); font-weight: 600; }
+    .profil-body .row-info .lv { width: 60%; color: var(--ink); }
+    .profil-sejarah { font-size: 0.83rem; line-height: 1.55; color: var(--ink); margin-top: 8px; }
+
+    .pengurus-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .pengurus-item { background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 8px; padding: 12px 8px; text-align: center; position: relative; }
+    .pengurus-avatar { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; margin: 0 auto 8px auto; display: block; background: var(--petrol-soft); }
+    .pengurus-avatar-fallback { width: 52px; height: 52px; border-radius: 50%; margin: 0 auto 8px auto; background: var(--petrol-soft); color: var(--petrol); display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: 'Fraunces', serif; font-size: 1.2rem; }
+    .pengurus-item .pg-nama { font-weight: 700; font-size: 0.82rem; color: var(--ink); display: block; }
+    .pengurus-item .pg-jabatan { font-size: 0.68rem; color: var(--brass); font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+
+    /* --- KEGIATAN & DOKUMENTASI (publik) --- */
+    .kegiatan-card { background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
+    .kegiatan-foto-scroll { display: flex; gap: 4px; overflow-x: auto; background: var(--petrol-soft); padding: 4px; }
+    .kegiatan-foto-scroll img { height: 110px; width: auto; border-radius: 4px; object-fit: cover; flex-shrink: 0; }
+    .kegiatan-foto-empty { height: 90px; display: flex; align-items: center; justify-content: center; background: var(--petrol-soft); color: var(--muted); font-size: 0.75rem; }
+    .kegiatan-body { padding: 12px 14px; }
+    .kegiatan-body .kg-nama { font-family: 'Fraunces', serif; font-weight: 600; font-size: 0.98rem; color: var(--ink); }
+    .kegiatan-body .kg-tgl { font-size: 0.7rem; color: var(--muted); margin-bottom: 6px; display: block; }
+    .kegiatan-body .kg-desc { font-size: 0.8rem; color: var(--ink); margin-bottom: 10px; }
+    .kegiatan-keuangan { display: flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+    .kegiatan-keuangan > div { flex: 1; padding: 8px; text-align: center; }
+    .kegiatan-keuangan > div:first-child { border-right: 1px solid var(--rule); }
+    .kegiatan-keuangan .kk-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); font-weight: 700; }
+    .kegiatan-keuangan .kk-val { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 0.85rem; }
+
+    .admin-thumb-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    .admin-thumb-row .thumb-wrap { position: relative; }
+    .admin-thumb-row img { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; border: 1px solid var(--rule); }
+    .admin-thumb-row .thumb-del { position: absolute; top: -6px; right: -6px; background: var(--brick); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.6rem; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid white; }
+
+    .bg-barang { background: var(--paper-raised); border: 1px solid var(--brass); border-left: 3px solid var(--brass); }
+    .nav-tabs { border-bottom-color: var(--rule); }
+    .nav-tabs .nav-link { color: var(--muted); font-weight: 700; font-size: 0.85rem; border: none; }
+    .nav-tabs .nav-link.active { color: var(--petrol); background: none; border-bottom: 3px solid var(--brass); }
+    .btn-check:checked + .btn-outline-primary { background-color: var(--info); border-color: var(--info); color: white; }
+    .btn-check:checked + .btn-outline-warning { background-color: var(--brass); border-color: var(--brass); color: white; }
+
+    /* Re-skin komponen Bootstrap supaya konsisten dengan palet ledger */
+    h5, h6, .font-display { font-family: 'Fraunces', serif; }
+    .card { border-radius: 8px; border-color: var(--rule) !important; }
+    .form-control, .form-select { border-radius: 6px; border-color: var(--rule); }
+    .form-control:focus, .form-select:focus { border-color: var(--brass); box-shadow: 0 0 0 0.2rem rgba(184,134,46,0.2); }
+    .btn { border-radius: 6px; font-weight: 600; }
+    .btn-success { background-color: var(--jade); border-color: var(--jade); }
+    .btn-success:hover, .btn-success:active { background-color: #266a4d !important; border-color: #266a4d !important; }
+    .btn-primary { background-color: var(--petrol); border-color: var(--petrol); }
+    .btn-primary:hover, .btn-primary:active { background-color: var(--petrol-deep) !important; border-color: var(--petrol-deep) !important; }
+    .btn-danger { background-color: var(--brick); border-color: var(--brick); }
+    .btn-warning { background-color: var(--brass); border-color: var(--brass); color: white; }
+    .btn-info { background-color: var(--info); border-color: var(--info); }
+    .btn-dark { background-color: var(--ink); border-color: var(--ink); }
+    .btn-outline-secondary { color: var(--muted); border-color: var(--rule); }
+    .btn-outline-danger { color: var(--brick); border-color: var(--brick); }
+    .btn-outline-dark { color: var(--petrol); border-color: var(--petrol); }
+    .btn-outline-info { color: var(--info); border-color: var(--info); }
+    .text-success { color: var(--jade) !important; }
+    .text-danger { color: var(--brick) !important; }
+    .text-primary { color: var(--petrol) !important; }
+    .text-info { color: var(--info) !important; }
+    .text-warning { color: var(--brass) !important; }
+    .badge.bg-success { background-color: var(--jade) !important; }
+    .badge.bg-secondary { background-color: var(--muted) !important; }
+    .table-light { --bs-table-bg: var(--petrol-soft); }
+    .btn:focus-visible, .form-control:focus-visible, .index-row:focus-visible, a:focus-visible, button:focus-visible {
+      outline: 2px solid var(--brass); outline-offset: 2px;
+    }
+
+    /* Letterhead untuk laporan cetak/PDF */
+    .print-letterhead { border-bottom: 3px double var(--brass); padding-bottom: 12px; margin-bottom: 16px; }
+    .print-letterhead .ph-title { font-family: 'Fraunces', serif; font-weight: 600; }
+    .print-letterhead .ph-brand { font-family: 'Fraunces', serif; font-weight: 700; letter-spacing: 0.5px; }
 
     /* --- STYLE KHUSUS CETAK / PRINT --- */
     @media print {
-        #mainAppView, .fab, .custom-modal-overlay, #loading { display: none !important; }
+        #mainAppView, .fab, .custom-modal-overlay, #loading, .bottom-nav { display: none !important; }
         body { background-color: white; padding: 0; font-size: 11pt; color: black; }
         #adminSection { 
-            display: block !important; position: static !important; 
+            display: block !important; position: static !important; max-width: 100% !important;
             box-shadow: none !important; border: none !important; 
             margin: 0 !important; padding: 0 !important;
         }
-        #loginStep, #inputStep > .d-flex.justify-content-between, #dashMenu, #menuProfil, #menuDonatur, #menuInput, #menuKasAwal { display: none !important; }
+        #loginStep, #inputStep > .d-flex.justify-content-between, #dashMenu, #menuProfil, #menuDonatur, #menuInput, #menuKasAwal, #menuProfilMusholla, #menuPengurus, #menuKegiatan { display: none !important; }
         #menuCetak { display: block !important; }
         .nav-breadcrumb, .nav-tabs, #reportFilters, .d-grid, .btn-close { display: none !important; }
         #viewKeuangan > .mb-3:first-child { display: none !important; } 
@@ -162,10 +293,14 @@
   <div id="mainAppView">
       <!-- Header -->
       <header class="masjid-header">
-        <h5 class="fw-bold mb-0"><i class="fas fa-mosque me-2"></i>Musholla Nurul Islam</h5>
-        <small class="opacity-75" id="headerSaldo">Total Saldo: Rp 0</small>
+        <div class="cover-icon"><i class="fas fa-mosque"></i></div>
+        <h5 class="mb-0">Musholla Nurul Islam</h5>
+        <span class="cover-caption">Buku Kas &amp; Transparansi Keuangan</span>
+        <span id="headerSaldo">Total Saldo: Rp 0</span>
       </header>
 
+      <!-- ===================== TAB: BUKU KAS ===================== -->
+      <div id="viewBukuKas">
       <!-- Running Text / Ticker -->
       <div class="ticker-container">
           <div class="ticker-wrapper" id="newsTickerContent">
@@ -194,26 +329,20 @@
       <div class="container px-3">
         
         <!-- Ringkasan Periode -->
-        <div class="row g-2 mb-2">
-          <div class="col-6">
-            <div class="info-box">
+        <div class="ledger-summary">
+          <div class="row g-0">
+            <div class="col-6">
               <div class="label-kecil text-success">Pemasukan</div>
-              <div class="angka-besar text-success" id="valMasuk">Rp 0</div>
+              <span class="angka-besar text-success" id="valMasuk">Rp 0</span>
             </div>
-          </div>
-          <div class="col-6">
-            <div class="info-box">
+            <div class="col-6">
               <div class="label-kecil text-danger">Pengeluaran</div>
-              <div class="angka-besar text-danger" id="valKeluar">Rp 0</div>
+              <span class="angka-besar text-danger" id="valKeluar">Rp 0</span>
             </div>
           </div>
-          <div class="col-12">
-            <div class="info-box py-2 bg-white border">
-              <div class="d-flex justify-content-between align-items-center px-2">
-                <span class="small text-muted">Surplus/Defisit Periode Ini:</span>
-                <span class="fw-bold" id="valSelisih">Rp 0</span>
-              </div>
-            </div>
+          <div class="ledger-selisih">
+            <span class="small text-muted">Surplus/Defisit Periode Ini</span>
+            <span class="fw-bold" id="valSelisih">Rp 0</span>
           </div>
         </div>
 
@@ -245,7 +374,42 @@
           <span id="koneksiStatus" class="badge bg-secondary">Inisialisasi...</span>
         </div>
       </div>
+      </div>
+      <!-- ===================== /TAB: BUKU KAS ===================== -->
+
+      <!-- ===================== TAB: PROFIL & PENGURUS (publik) ===================== -->
+      <div id="viewProfilPublik" class="d-none">
+        <div class="container px-3 pt-3">
+          <div id="profilPublikContainer">
+            <div class="text-center py-4"><div class="spinner-border text-success spinner-border-sm" role="status"></div><div class="small text-muted mt-2">Memuat profil...</div></div>
+          </div>
+
+          <h6 class="fw-bold mb-2 ps-1 border-start border-4 border-success mt-3">&nbsp; Struktur Pengurus</h6>
+          <div id="pengurusPublikContainer" class="pengurus-grid mb-5">
+            <div class="text-center py-3 small text-muted" style="grid-column: 1 / -1;">Memuat data pengurus...</div>
+          </div>
+        </div>
+      </div>
+      <!-- ===================== /TAB: PROFIL & PENGURUS ===================== -->
+
+      <!-- ===================== TAB: KEGIATAN & DOKUMENTASI (publik) ===================== -->
+      <div id="viewKegiatanPublik" class="d-none">
+        <div class="container px-3 pt-3">
+          <h6 class="fw-bold mb-2 ps-1 border-start border-4 border-success">&nbsp; Dokumentasi &amp; Laporan per Kegiatan</h6>
+          <div id="kegiatanPublikContainer" class="mb-5">
+            <div class="text-center py-4"><div class="spinner-border text-success spinner-border-sm" role="status"></div><div class="small text-muted mt-2">Memuat kegiatan...</div></div>
+          </div>
+        </div>
+      </div>
+      <!-- ===================== /TAB: KEGIATAN & DOKUMENTASI ===================== -->
   </div> 
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <div class="bottom-nav-item active" id="navBukuKas" onclick="switchMainTab('BukuKas')"><i class="fas fa-book"></i>Buku Kas</div>
+    <div class="bottom-nav-item" id="navProfil" onclick="switchMainTab('Profil')"><i class="fas fa-mosque"></i>Profil</div>
+    <div class="bottom-nav-item" id="navKegiatan" onclick="switchMainTab('Kegiatan')"><i class="fas fa-images"></i>Kegiatan</div>
+  </div>
 
   <!-- Admin Panel -->
   <div id="adminSection">
@@ -317,24 +481,55 @@
 
       <!-- A. MENU GRID UTAMA -->
       <div id="dashMenu">
-         <div class="text-center mb-2">
-            <p class="small text-muted mb-0">Silakan pilih menu operasional:</p>
+         <div class="mb-1">
+            <p class="small text-muted mb-0">Menu operasional bendahara</p>
          </div>
-         <div class="dashboard-grid">
-            <div class="menu-item" onclick="openSubMenu('menuProfil')">
-               <i class="fas fa-id-badge text-primary"></i><span>Profil<br>Petugas</span>
+         <div class="dash-index">
+            <div class="index-row" tabindex="0" role="button" onclick="openSubMenu('menuProfil')" onkeydown="if(event.key==='Enter')openSubMenu('menuProfil')">
+               <div class="index-icon" style="background:var(--petrol-soft);color:var(--petrol)"><i class="fas fa-id-badge"></i></div>
+               <div class="index-text"><span class="idx-title">Profil Petugas</span><span class="idx-sub">Data & status bendahara</span></div>
+               <i class="fas fa-chevron-right chev"></i>
             </div>
-            <div class="menu-item" onclick="openSubMenu('menuDonatur')">
-               <i class="fas fa-users text-info"></i><span>Data<br>Donatur</span>
+            <div class="index-row" tabindex="0" role="button" onclick="openSubMenu('menuDonatur')" onkeydown="if(event.key==='Enter')openSubMenu('menuDonatur')">
+               <div class="index-icon" style="background:var(--info-soft);color:var(--info)"><i class="fas fa-users"></i></div>
+               <div class="index-text"><span class="idx-title">Data Donatur</span><span class="idx-sub">Kelola daftar donatur</span></div>
+               <i class="fas fa-chevron-right chev"></i>
             </div>
-            <div class="menu-item" onclick="openSubMenu('menuInput')">
-               <i class="fas fa-edit text-success"></i><span>Input<br>Transaksi</span>
+            <div class="index-row" tabindex="0" role="button" onclick="openSubMenu('menuInput')" onkeydown="if(event.key==='Enter')openSubMenu('menuInput')">
+               <div class="index-icon" style="background:var(--jade-soft);color:var(--jade)"><i class="fas fa-edit"></i></div>
+               <div class="index-text"><span class="idx-title">Input Transaksi</span><span class="idx-sub">Catat uang masuk/keluar & barang</span></div>
+               <i class="fas fa-chevron-right chev"></i>
             </div>
-            <div class="menu-item" onclick="openSubMenu('menuKasAwal')">
-               <i class="fas fa-wallet text-warning"></i><span>Input<br>Kas Awal</span>
+            <div class="index-row" tabindex="0" role="button" onclick="openSubMenu('menuKasAwal')" onkeydown="if(event.key==='Enter')openSubMenu('menuKasAwal')">
+               <div class="index-icon" style="background:#F5EEDD;color:var(--brass)"><i class="fas fa-wallet"></i></div>
+               <div class="index-text"><span class="idx-title">Input Kas Awal</span><span class="idx-sub">Atur saldo pembukuan awal</span></div>
+               <i class="fas fa-chevron-right chev"></i>
             </div>
-            <div class="menu-item" onclick="openSubMenu('menuCetak')">
-               <i class="fas fa-print text-danger"></i><span>Rekap &<br>Cetak</span>
+            <div class="index-row" tabindex="0" role="button" onclick="openSubMenu('menuCetak')" onkeydown="if(event.key==='Enter')openSubMenu('menuCetak')">
+               <div class="index-icon" style="background:var(--brick-soft);color:var(--brick)"><i class="fas fa-print"></i></div>
+               <div class="index-text"><span class="idx-title">Rekap & Cetak</span><span class="idx-sub">Buat & unduh laporan PDF</span></div>
+               <i class="fas fa-chevron-right chev"></i>
+            </div>
+         </div>
+
+         <div class="mb-1 mt-3">
+            <p class="small text-muted mb-0">Profil & Kegiatan Musholla (tampil publik)</p>
+         </div>
+         <div class="dash-index">
+            <div class="index-row" tabindex="0" role="button" onclick="openSubMenu('menuProfilMusholla')" onkeydown="if(event.key==='Enter')openSubMenu('menuProfilMusholla')">
+               <div class="index-icon" style="background:var(--petrol-soft);color:var(--petrol)"><i class="fas fa-mosque"></i></div>
+               <div class="index-text"><span class="idx-title">Profil Musholla</span><span class="idx-sub">Sejarah, alamat & data pendiri</span></div>
+               <i class="fas fa-chevron-right chev"></i>
+            </div>
+            <div class="index-row" tabindex="0" role="button" onclick="openSubMenu('menuPengurus')" onkeydown="if(event.key==='Enter')openSubMenu('menuPengurus')">
+               <div class="index-icon" style="background:var(--info-soft);color:var(--info)"><i class="fas fa-user-tie"></i></div>
+               <div class="index-text"><span class="idx-title">Data Pengurus</span><span class="idx-sub">Struktur takmir & kontak</span></div>
+               <i class="fas fa-chevron-right chev"></i>
+            </div>
+            <div class="index-row" tabindex="0" role="button" onclick="openSubMenu('menuKegiatan')" onkeydown="if(event.key==='Enter')openSubMenu('menuKegiatan')">
+               <div class="index-icon" style="background:#F5EEDD;color:var(--brass)"><i class="fas fa-images"></i></div>
+               <div class="index-text"><span class="idx-title">Kegiatan & Dokumentasi</span><span class="idx-sub">Foto kegiatan & laporan per acara</span></div>
+               <i class="fas fa-chevron-right chev"></i>
             </div>
          </div>
       </div>
@@ -549,6 +744,91 @@
         </div>
       </div>
 
+      <!-- 6. PROFIL MUSHOLLA (admin edit, tampil publik) -->
+      <div id="menuProfilMusholla" class="sub-menu d-none">
+        <div class="nav-breadcrumb" onclick="backToDash()"><i class="fas fa-arrow-left me-2"></i> Kembali ke Menu</div>
+        <div class="card border-0 shadow-sm p-3">
+            <h6 class="fw-bold text-success mb-3"><i class="fas fa-mosque me-2"></i>Edit Profil Musholla</h6>
+            <form id="formProfilMusholla" onsubmit="simpanProfilMusholla(event)">
+                <div class="mb-2 text-center">
+                    <img id="previewLogoProfil" src="images/logonurulislam.png" alt="Logo" style="width:64px;height:64px;object-fit:contain;border-radius:50%;border:1px solid var(--rule);background:var(--paper);padding:4px;">
+                    <label class="small text-muted d-block mt-1">Ganti Logo (opsional)</label>
+                    <input type="file" class="form-control form-control-sm" id="inputLogoProfil" accept="image/jpeg, image/png" onchange="previewFotoTunggal(this,'previewLogoProfil')">
+                </div>
+                <div class="mb-2"><label class="small text-muted">Nama Musholla</label><input type="text" id="pfNama" class="form-control form-control-sm" required></div>
+                <div class="mb-2"><label class="small text-muted">Alamat Lengkap</label><textarea id="pfAlamat" class="form-control form-control-sm" rows="2"></textarea></div>
+                <div class="row g-2">
+                    <div class="col-6 mb-2"><label class="small text-muted">Tahun Berdiri</label><input type="text" id="pfTahun" class="form-control form-control-sm" placeholder="Contoh: 1998"></div>
+                    <div class="col-6 mb-2"><label class="small text-muted">Nama Pendiri</label><input type="text" id="pfPendiri" class="form-control form-control-sm"></div>
+                </div>
+                <div class="mb-3"><label class="small text-muted">Sejarah Singkat</label><textarea id="pfSejarah" class="form-control form-control-sm" rows="4" placeholder="Ceritakan sejarah singkat berdirinya musholla..."></textarea></div>
+                <button type="submit" class="btn btn-success w-100 fw-bold" id="btnSimpanProfil">SIMPAN PROFIL</button>
+            </form>
+        </div>
+      </div>
+
+      <!-- 7. DATA PENGURUS (admin CRUD, tampil publik) -->
+      <div id="menuPengurus" class="sub-menu d-none">
+          <div class="nav-breadcrumb" onclick="backToDash()"><i class="fas fa-arrow-left me-2"></i> Kembali ke Menu</div>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="fw-bold text-info mb-0"><i class="fas fa-user-tie me-2"></i>Struktur Pengurus</h6>
+              <button class="btn btn-sm btn-info text-white rounded-pill px-3" onclick="toggleFormPengurus()"><i class="fas fa-plus me-1"></i> Tambah</button>
+          </div>
+          <div id="formTambahPengurus" class="card bg-light border-0 p-3 mb-3 d-none">
+              <h6 class="small fw-bold text-muted mb-2">Tambah Pengurus</h6>
+              <form onsubmit="simpanPengurus(event)">
+                  <div class="mb-2 text-center">
+                      <img id="previewFotoPengurusBaru" src="" class="d-none" style="width:52px;height:52px;object-fit:cover;border-radius:50%;">
+                      <label class="small text-muted d-block mt-1">Foto (opsional)</label>
+                      <input type="file" class="form-control form-control-sm" id="inputFotoPengurus" accept="image/jpeg, image/png" onchange="previewFotoTunggal(this,'previewFotoPengurusBaru')">
+                  </div>
+                  <div class="mb-2"><input type="text" id="namaPengurus" class="form-control form-control-sm" placeholder="Nama Lengkap" required></div>
+                  <div class="mb-2"><input type="text" id="jabatanPengurus" class="form-control form-control-sm" placeholder="Jabatan (Contoh: Ketua Takmir)" required></div>
+                  <div class="mb-2"><input type="tel" id="hpPengurus" class="form-control form-control-sm" placeholder="No. HP / WA (opsional)"></div>
+                  <div class="d-flex gap-2">
+                      <button type="submit" class="btn btn-primary btn-sm w-100">Simpan</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm w-100" onclick="toggleFormPengurus()">Batal</button>
+                  </div>
+              </form>
+          </div>
+          <div id="listPengurusAdminContainer">
+              <div class="text-center mt-3"><div class="spinner-border text-info spinner-border-sm" role="status"></div><div class="small text-muted">Mengambil data...</div></div>
+          </div>
+      </div>
+
+      <!-- 8. KEGIATAN & DOKUMENTASI (admin CRUD, tampil publik) -->
+      <div id="menuKegiatan" class="sub-menu d-none">
+          <div class="nav-breadcrumb" onclick="backToDash()"><i class="fas fa-arrow-left me-2"></i> Kembali ke Menu</div>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="fw-bold text-warning mb-0"><i class="fas fa-images me-2"></i>Kegiatan & Dokumentasi</h6>
+              <button class="btn btn-sm btn-warning text-white rounded-pill px-3" onclick="toggleFormKegiatan()"><i class="fas fa-plus me-1"></i> Tambah</button>
+          </div>
+          <div id="formTambahKegiatan" class="card bg-light border-0 p-3 mb-3 d-none">
+              <h6 class="small fw-bold text-muted mb-2">Tambah Kegiatan</h6>
+              <form onsubmit="simpanKegiatan(event)">
+                  <div class="mb-2"><input type="text" id="namaKegiatan" class="form-control form-control-sm" placeholder="Nama Kegiatan (Contoh: Buka Bersama 2026)" required></div>
+                  <div class="mb-2"><input type="date" id="tglKegiatan" class="form-control form-control-sm" required></div>
+                  <div class="mb-2"><textarea id="deskKegiatan" class="form-control form-control-sm" rows="2" placeholder="Deskripsi singkat kegiatan"></textarea></div>
+                  <div class="row g-2 mb-2">
+                      <div class="col-6"><label class="small fw-bold text-success">Pemasukan (Rp)</label><input type="number" id="masukKegiatan" class="form-control form-control-sm input-debet" placeholder="0"></div>
+                      <div class="col-6"><label class="small fw-bold text-danger">Pengeluaran (Rp)</label><input type="number" id="keluarKegiatan" class="form-control form-control-sm input-kredit" placeholder="0"></div>
+                  </div>
+                  <div class="mb-2">
+                      <label class="small text-muted d-block">Foto Dokumentasi (bisa pilih beberapa)</label>
+                      <input type="file" class="form-control form-control-sm" id="inputFotoKegiatan" accept="image/jpeg, image/png" multiple onchange="previewFotoMulti(this,'previewFotoKegiatanBaru')">
+                      <div id="previewFotoKegiatanBaru" class="admin-thumb-row"></div>
+                  </div>
+                  <div class="d-flex gap-2">
+                      <button type="submit" class="btn btn-primary btn-sm w-100">Simpan</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm w-100" onclick="toggleFormKegiatan()">Batal</button>
+                  </div>
+              </form>
+          </div>
+          <div id="listKegiatanAdminContainer">
+              <div class="text-center mt-3"><div class="spinner-border text-warning spinner-border-sm" role="status"></div><div class="small text-muted">Mengambil data...</div></div>
+          </div>
+      </div>
+
     </div>
   </div>
 
@@ -567,6 +847,44 @@
       <div class="custom-modal-content">
           <div class="d-flex justify-content-between mb-3"><h6 class="fw-bold text-info"><i class="fas fa-user-edit me-2"></i>Edit Data Donatur</h6><button class="btn-close" onclick="tutupEditDonatur()"></button></div>
           <form id="formEditDonaturData" onsubmit="simpanEditDonatur(event)"><input type="hidden" id="editDonaturIndex"><input type="hidden" id="editDonaturOriginalId"><input type="hidden" id="editDonaturOriginalName"><div class="mb-2"><label class="small text-muted">Nama Lengkap</label><input type="text" id="editNamaDonatur" class="form-control form-control-sm" required></div><div class="mb-2"><label class="small text-muted">No. HP / WA</label><input type="tel" id="editHpDonatur" class="form-control form-control-sm"></div><div class="mb-2"><label class="small text-muted">Alamat</label><textarea id="editAlamatDonatur" class="form-control form-control-sm" rows="2"></textarea></div><div class="mb-3"><label class="small text-muted">Catatan Tambahan</label><input type="text" id="editCatatanDonatur" class="form-control form-control-sm"></div><div class="d-flex gap-2"><button type="submit" class="btn btn-info w-100 fw-bold text-white">UPDATE DATA</button><button type="button" class="btn btn-outline-secondary w-100" onclick="tutupEditDonatur()">Batal</button></div></form>
+      </div>
+  </div>
+
+  <!-- Modal Edit Pengurus -->
+  <div id="modalEditPengurus" class="custom-modal-overlay">
+      <div class="custom-modal-content">
+          <div class="d-flex justify-content-between mb-3"><h6 class="fw-bold text-info"><i class="fas fa-user-edit me-2"></i>Edit Data Pengurus</h6><button class="btn-close" onclick="tutupEditPengurus()"></button></div>
+          <form id="formEditPengurusData" onsubmit="simpanEditPengurus(event)">
+              <input type="hidden" id="editPengurusIndex"><input type="hidden" id="editPengurusOriginalId">
+              <div class="mb-2 text-center"><img id="previewFotoPengurusEdit" src="" class="d-none" style="width:52px;height:52px;object-fit:cover;border-radius:50%;"><label class="small text-muted d-block mt-1">Ganti Foto (opsional)</label><input type="file" class="form-control form-control-sm" id="editFotoPengurus" accept="image/jpeg, image/png" onchange="previewFotoTunggal(this,'previewFotoPengurusEdit')"></div>
+              <div class="mb-2"><label class="small text-muted">Nama Lengkap</label><input type="text" id="editNamaPengurus" class="form-control form-control-sm" required></div>
+              <div class="mb-2"><label class="small text-muted">Jabatan</label><input type="text" id="editJabatanPengurus" class="form-control form-control-sm" required></div>
+              <div class="mb-3"><label class="small text-muted">No. HP / WA</label><input type="tel" id="editHpPengurus" class="form-control form-control-sm"></div>
+              <div class="d-flex gap-2"><button type="submit" class="btn btn-info w-100 fw-bold text-white">UPDATE DATA</button><button type="button" class="btn btn-outline-secondary w-100" onclick="tutupEditPengurus()">Batal</button></div>
+          </form>
+      </div>
+  </div>
+
+  <!-- Modal Edit Kegiatan -->
+  <div id="modalEditKegiatan" class="custom-modal-overlay">
+      <div class="custom-modal-content">
+          <div class="d-flex justify-content-between mb-3"><h6 class="fw-bold text-warning"><i class="fas fa-edit me-2"></i>Edit Kegiatan</h6><button class="btn-close" onclick="tutupEditKegiatan()"></button></div>
+          <form id="formEditKegiatanData" onsubmit="simpanEditKegiatan(event)">
+              <input type="hidden" id="editKegiatanIndex"><input type="hidden" id="editKegiatanOriginalId">
+              <div class="mb-2"><label class="small text-muted">Nama Kegiatan</label><input type="text" id="editNamaKegiatan" class="form-control form-control-sm" required></div>
+              <div class="mb-2"><label class="small text-muted">Tanggal</label><input type="date" id="editTglKegiatan" class="form-control form-control-sm" required></div>
+              <div class="mb-2"><label class="small text-muted">Deskripsi</label><textarea id="editDeskKegiatan" class="form-control form-control-sm" rows="2"></textarea></div>
+              <div class="row g-2 mb-2">
+                  <div class="col-6"><label class="small fw-bold text-success">Pemasukan (Rp)</label><input type="number" id="editMasukKegiatan" class="form-control form-control-sm input-debet"></div>
+                  <div class="col-6"><label class="small fw-bold text-danger">Pengeluaran (Rp)</label><input type="number" id="editKeluarKegiatan" class="form-control form-control-sm input-kredit"></div>
+              </div>
+              <div class="mb-3">
+                  <label class="small text-muted d-block">Tambah Foto Baru (opsional)</label>
+                  <input type="file" class="form-control form-control-sm" id="editFotoKegiatan" accept="image/jpeg, image/png" multiple onchange="previewFotoMulti(this,'previewFotoKegiatanEdit')">
+                  <div id="previewFotoKegiatanEdit" class="admin-thumb-row"></div>
+              </div>
+              <div class="d-flex gap-2"><button type="submit" class="btn btn-warning w-100 fw-bold text-white">UPDATE DATA</button><button type="button" class="btn btn-outline-secondary w-100" onclick="tutupEditKegiatan()">Batal</button></div>
+          </form>
       </div>
   </div>
 
@@ -624,7 +942,33 @@
     
     let globalDonaturs = [];
     let globalRiwayat = []; 
-    
+    let globalPengurus = [];
+    let globalKegiatan = [];
+    let tempFotoKegiatanBaru = []; // {data, mimeType, name} menunggu disimpan (form tambah)
+    let tempFotoKegiatanEdit = [];  // menunggu disimpan (form edit)
+
+    // Data Dummy Offline — Profil Musholla
+    let localProfil = {
+        nama: "Musholla Nurul Islam",
+        alamat: "Jl. Contoh Alamat No. 1, Lamongan, Jawa Timur",
+        tahunBerdiri: "1998",
+        pendiri: "Alm. KH. Contoh Nama (Simulasi Mode Offline)",
+        sejarah: "Musholla ini didirikan atas swadaya warga setempat sebagai pusat kegiatan ibadah dan syiar Islam di lingkungan sekitar. (Ini adalah data contoh mode offline — silakan edit lewat Menu Bendahara > Profil Musholla).",
+        logo: "images/logonurulislam.png"
+    };
+
+    // Data Dummy Offline — Pengurus
+    let localPengurus = [
+        { id: 1, nama: "Ust. Fauzan Munmar", jabatan: "Ketua Takmir", hp: "-", foto: "" },
+        { id: 2, nama: "Nailul Authar", jabatan: "Bendahara", hp: "-", foto: "" },
+        { id: 3, nama: "Bendahara 101", jabatan: "Sekretaris", hp: "-", foto: "" }
+    ];
+
+    // Data Dummy Offline — Kegiatan & Dokumentasi
+    let localKegiatan = [
+        { id: 1, nama: "Pengajian Rutin Jumat (Contoh)", tanggal: curDateStr, deskripsi: "Kegiatan pengajian rutin mingguan bersama warga sekitar. (Data contoh mode offline)", masuk: 500000, keluar: 150000, foto: [] }
+    ];
+
     // Data Dummy Offline
     let localTransactions = [
         {tanggal: curDateStr, ket: 'Saldo Awal (Simulasi Mode Offline)', nominal: 1000000, tipe: 'masuk', kategori: 'Kas Awal'},
@@ -663,6 +1007,9 @@
       applyFilter(); 
       loadDonaturs();
       loadKategoriServer();
+      loadProfilMusholla();
+      loadPengurus();
+      loadKegiatan();
     };
 
     // --- LOGIKA API DAN FORM ---
@@ -957,6 +1304,277 @@
     function openSubMenu(id) { document.getElementById('dashMenu').classList.add('d-none'); document.querySelectorAll('.sub-menu').forEach(e=>e.classList.add('d-none')); document.getElementById(id).classList.remove('d-none'); if(id==='menuCetak') updateReportForm(); }
     function backToDash() { document.querySelectorAll('.sub-menu').forEach(e=>e.classList.add('d-none')); document.getElementById('dashMenu').classList.remove('d-none'); }
     function toggleFormDonatur() { document.getElementById('formTambahDonatur').classList.toggle('d-none'); }
+
+    // ============================================================
+    // TAB NAVIGASI PUBLIK (Buku Kas / Profil / Kegiatan)
+    // ============================================================
+    function switchMainTab(tab) {
+        ['viewBukuKas','viewProfilPublik','viewKegiatanPublik'].forEach(id => document.getElementById(id).classList.add('d-none'));
+        ['navBukuKas','navProfil','navKegiatan'].forEach(id => document.getElementById(id).classList.remove('active'));
+        document.getElementById('view' + tab).classList.remove('d-none');
+        document.getElementById('nav' + tab).classList.add('active');
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    // ============================================================
+    // HELPER: PREVIEW & KONVERSI FOTO KE BASE64
+    // ============================================================
+    function previewFotoTunggal(input, imgElId) {
+        if (!input.files || !input.files[0]) return;
+        const reader = new FileReader();
+        reader.onload = e => { const img = document.getElementById(imgElId); img.src = e.target.result; img.classList.remove('d-none'); };
+        reader.readAsDataURL(input.files[0]);
+    }
+    function fileToBase64Payload(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = e => { const result = e.target.result; resolve({ data: result.split(',')[1], mimeType: result.split(';')[0].split(':')[1], name: file.name, preview: result }); };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+    function previewFotoMulti(input, containerId) {
+        if (!input.files || input.files.length === 0) return;
+        const isEdit = containerId === 'previewFotoKegiatanEdit';
+        Promise.all(Array.from(input.files).map(fileToBase64Payload)).then(payloads => {
+            if (isEdit) tempFotoKegiatanEdit = tempFotoKegiatanEdit.concat(payloads);
+            else tempFotoKegiatanBaru = tempFotoKegiatanBaru.concat(payloads);
+            renderThumbRow(containerId, isEdit ? tempFotoKegiatanEdit : tempFotoKegiatanBaru, isEdit);
+        });
+    }
+    function renderThumbRow(containerId, arr, isEdit) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = arr.map((p, i) => `<div class="thumb-wrap"><img src="${p.preview}"><div class="thumb-del" onclick="hapusThumb('${containerId}',${i})">&times;</div></div>`).join('');
+    }
+    function hapusThumb(containerId, i) {
+        const isEdit = containerId === 'previewFotoKegiatanEdit';
+        if (isEdit) tempFotoKegiatanEdit.splice(i, 1); else tempFotoKegiatanBaru.splice(i, 1);
+        renderThumbRow(containerId, isEdit ? tempFotoKegiatanEdit : tempFotoKegiatanBaru, isEdit);
+    }
+
+    // ============================================================
+    // PROFIL MUSHOLLA
+    // ============================================================
+    function loadProfilMusholla() {
+        callAPI('getProfil').then(data => { if (data && data.nama) localProfil = data; renderProfilPublik(localProfil); fillFormProfil(localProfil); })
+          .catch(err => { renderProfilPublik(localProfil); fillFormProfil(localProfil); });
+    }
+    function renderProfilPublik(p) {
+        const el = document.getElementById('profilPublikContainer');
+        el.innerHTML = `
+            <div class="profil-card">
+                <div class="profil-cover">
+                    <img class="profil-logo" src="${p.logo || 'images/logonurulislam.png'}" alt="Logo Musholla" onerror="this.src='images/logonurulislam.png'">
+                    <h5>${p.nama || 'Musholla'}</h5>
+                    <div class="profil-alamat"><i class="fas fa-map-marker-alt me-1"></i>${p.alamat || '-'}</div>
+                </div>
+                <div class="profil-body">
+                    <div class="row-info"><div class="li">Tahun Berdiri</div><div class="lv">${p.tahunBerdiri || '-'}</div></div>
+                    <div class="row-info"><div class="li">Pendiri</div><div class="lv">${p.pendiri || '-'}</div></div>
+                    ${p.sejarah ? `<div class="profil-sejarah"><b>Sejarah Singkat:</b><br>${p.sejarah}</div>` : ''}
+                </div>
+            </div>`;
+    }
+    function fillFormProfil(p) {
+        document.getElementById('pfNama').value = p.nama || '';
+        document.getElementById('pfAlamat').value = p.alamat || '';
+        document.getElementById('pfTahun').value = p.tahunBerdiri || '';
+        document.getElementById('pfPendiri').value = p.pendiri || '';
+        document.getElementById('pfSejarah').value = p.sejarah || '';
+        document.getElementById('previewLogoProfil').src = p.logo || 'images/logonurulislam.png';
+    }
+    function simpanProfilMusholla(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnSimpanProfil');
+        btn.disabled = true; btn.innerText = 'Menyimpan...';
+        const dataDasar = { username: localStorage.getItem('mk_user'), token: localStorage.getItem('mk_token'), nama: document.getElementById('pfNama').value, alamat: document.getElementById('pfAlamat').value, tahunBerdiri: document.getElementById('pfTahun').value, pendiri: document.getElementById('pfPendiri').value, sejarah: document.getElementById('pfSejarah').value };
+        const fileInput = document.getElementById('inputLogoProfil');
+        const kirim = (logoPayload) => {
+            const payload = Object.assign({}, dataDasar, logoPayload ? { logoFile: logoPayload } : {});
+            callAPI('simpanProfil', payload).then(res => {
+                localProfil = Object.assign({}, dataDasar, { logo: (res && res.logo) || localProfil.logo });
+                renderProfilPublik(localProfil); alert('Profil Musholla Berhasil Disimpan!');
+            }).catch(err => {
+                localProfil = Object.assign({}, dataDasar, { logo: (logoPayload && logoPayload.preview) || localProfil.logo });
+                renderProfilPublik(localProfil);
+                alert('Mode Offline / Demo: Profil disimpan di tampilan saja (belum tersambung ke server).');
+            }).finally(() => { btn.disabled = false; btn.innerText = 'SIMPAN PROFIL'; });
+        };
+        if (fileInput.files.length > 0) fileToBase64Payload(fileInput.files[0]).then(kirim); else kirim(null);
+    }
+
+    // ============================================================
+    // DATA PENGURUS
+    // ============================================================
+    function loadPengurus() {
+        callAPI('getPengurus').then(data => { globalPengurus = Array.isArray(data) && data.length ? data : localPengurus; renderPengurusPublik(globalPengurus); renderListPengurusAdmin(globalPengurus); })
+          .catch(err => { globalPengurus = localPengurus; renderPengurusPublik(globalPengurus); renderListPengurusAdmin(globalPengurus); });
+    }
+    function renderPengurusPublik(data) {
+        const el = document.getElementById('pengurusPublikContainer');
+        if (!data || data.length === 0) { el.innerHTML = '<div class="text-center text-muted small py-3" style="grid-column:1/-1;">Belum ada data pengurus.</div>'; return; }
+        el.innerHTML = data.map(p => `
+            <div class="pengurus-item">
+                ${p.foto ? `<img class="pengurus-avatar" src="${p.foto}" alt="${p.nama}">` : `<div class="pengurus-avatar-fallback">${(p.nama||'?').charAt(0).toUpperCase()}</div>`}
+                <span class="pg-nama">${p.nama}</span>
+                <span class="pg-jabatan">${p.jabatan}</span>
+            </div>`).join('');
+    }
+    function renderListPengurusAdmin(data) {
+        const el = document.getElementById('listPengurusAdminContainer');
+        if (!data || data.length === 0) { el.innerHTML = '<div class="text-center text-muted small">Belum ada data.</div>'; return; }
+        el.innerHTML = data.map((p, index) => `
+            <div class="donatur-item justify-content-between">
+                <div class="d-flex">
+                    ${p.foto ? `<img src="${p.foto}" style="width:35px;height:35px;border-radius:50%;object-fit:cover;margin-right:10px;">` : `<div class="avatar-char mt-1">${(p.nama||'?').charAt(0).toUpperCase()}</div>`}
+                    <div><div class="fw-bold small">${p.nama}</div><div class="text-muted" style="font-size:0.7rem">${p.jabatan}</div></div>
+                </div>
+                <div><button class="btn btn-sm text-info me-1" onclick="bukaEditPengurus(${index})"><i class="fas fa-edit"></i></button><button class="btn btn-sm text-danger" onclick="hapusPengurus(${index})"><i class="fas fa-trash"></i></button></div>
+            </div>`).join('');
+    }
+    function simpanPengurus(e) {
+        e.preventDefault();
+        const nama = document.getElementById('namaPengurus').value, jabatan = document.getElementById('jabatanPengurus').value, hp = document.getElementById('hpPengurus').value;
+        const btn = e.target.querySelector('button[type="submit"]'); btn.disabled = true; btn.innerText = 'Menyimpan...';
+        const fileInput = document.getElementById('inputFotoPengurus');
+        const kirim = (fotoPayload) => {
+            const payload = { username: localStorage.getItem('mk_user'), token: localStorage.getItem('mk_token'), nama, jabatan, hp, fotoFile: fotoPayload };
+            callAPI('tambahPengurus', payload).then(newData => {
+                globalPengurus = newData; renderPengurusPublik(globalPengurus); renderListPengurusAdmin(globalPengurus);
+                toggleFormPengurus(); alert('Pengurus Tersimpan!'); e.target.reset(); document.getElementById('previewFotoPengurusBaru').classList.add('d-none');
+            }).catch(err => {
+                globalPengurus.push({ id: Date.now(), nama, jabatan, hp, foto: fotoPayload ? fotoPayload.preview : '' });
+                renderPengurusPublik(globalPengurus); renderListPengurusAdmin(globalPengurus);
+                toggleFormPengurus(); alert('Mode Offline / Demo: Data pengurus disimpan di tampilan saja.'); e.target.reset(); document.getElementById('previewFotoPengurusBaru').classList.add('d-none');
+            }).finally(() => { btn.disabled = false; btn.innerText = 'Simpan'; });
+        };
+        if (fileInput.files.length > 0) fileToBase64Payload(fileInput.files[0]).then(kirim); else kirim(null);
+    }
+    function bukaEditPengurus(index) {
+        const p = globalPengurus[index]; if (!p) return;
+        document.getElementById('editPengurusIndex').value = index; document.getElementById('editPengurusOriginalId').value = p.id || '';
+        document.getElementById('editNamaPengurus').value = p.nama || ''; document.getElementById('editJabatanPengurus').value = p.jabatan || ''; document.getElementById('editHpPengurus').value = p.hp || '';
+        const img = document.getElementById('previewFotoPengurusEdit'); if (p.foto) { img.src = p.foto; img.classList.remove('d-none'); } else { img.classList.add('d-none'); }
+        document.getElementById('modalEditPengurus').style.display = 'flex';
+    }
+    function tutupEditPengurus() { document.getElementById('modalEditPengurus').style.display = 'none'; }
+    function simpanEditPengurus(e) {
+        e.preventDefault();
+        const idx = document.getElementById('editPengurusIndex').value;
+        const dataDasar = { id: document.getElementById('editPengurusOriginalId').value, nama: document.getElementById('editNamaPengurus').value, jabatan: document.getElementById('editJabatanPengurus').value, hp: document.getElementById('editHpPengurus').value };
+        const btn = e.target.querySelector('button[type="submit"]'); btn.disabled = true; btn.innerText = 'Mengupdate...';
+        const fileInput = document.getElementById('editFotoPengurus');
+        const kirim = (fotoPayload) => {
+            const payload = Object.assign({ username: localStorage.getItem('mk_user'), token: localStorage.getItem('mk_token') }, dataDasar, fotoPayload ? { fotoFile: fotoPayload } : {});
+            callAPI('editPengurus', payload).then(newData => {
+                globalPengurus = newData; renderPengurusPublik(globalPengurus); renderListPengurusAdmin(globalPengurus);
+                tutupEditPengurus(); alert('Data Pengurus Berhasil Diupdate!');
+            }).catch(err => {
+                globalPengurus[idx] = Object.assign({}, globalPengurus[idx], dataDasar, fotoPayload ? { foto: fotoPayload.preview } : {});
+                renderPengurusPublik(globalPengurus); renderListPengurusAdmin(globalPengurus);
+                tutupEditPengurus(); alert('Mode Offline / Demo: Data pengurus diupdate di tampilan saja.');
+            }).finally(() => { btn.disabled = false; btn.innerText = 'UPDATE DATA'; });
+        };
+        if (fileInput.files.length > 0) fileToBase64Payload(fileInput.files[0]).then(kirim); else kirim(null);
+    }
+    function hapusPengurus(index) {
+        if (!confirm('Yakin hapus data pengurus ini?')) return;
+        const p = globalPengurus[index];
+        callAPI('hapusPengurus', { username: localStorage.getItem('mk_user'), token: localStorage.getItem('mk_token'), id: p.id }).then(newData => {
+            globalPengurus = newData; renderPengurusPublik(globalPengurus); renderListPengurusAdmin(globalPengurus); alert('Data pengurus dihapus.');
+        }).catch(err => {
+            globalPengurus.splice(index, 1); renderPengurusPublik(globalPengurus); renderListPengurusAdmin(globalPengurus);
+            alert('Mode Offline / Demo: Data dihapus dari tampilan.');
+        });
+    }
+    function toggleFormPengurus() { document.getElementById('formTambahPengurus').classList.toggle('d-none'); }
+
+    // ============================================================
+    // KEGIATAN & DOKUMENTASI
+    // ============================================================
+    function loadKegiatan() {
+        callAPI('getKegiatan').then(data => { globalKegiatan = Array.isArray(data) && data.length ? data : localKegiatan; renderKegiatanPublik(globalKegiatan); renderListKegiatanAdmin(globalKegiatan); })
+          .catch(err => { globalKegiatan = localKegiatan; renderKegiatanPublik(globalKegiatan); renderListKegiatanAdmin(globalKegiatan); });
+    }
+    function renderKegiatanPublik(data) {
+        const el = document.getElementById('kegiatanPublikContainer');
+        if (!data || data.length === 0) { el.innerHTML = '<div class="text-center text-muted small py-4">Belum ada kegiatan yang didokumentasikan.</div>'; return; }
+        const sorted = [...data].sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+        el.innerHTML = sorted.map(k => {
+            const fotoHtml = (k.foto && k.foto.length > 0) ? `<div class="kegiatan-foto-scroll">${k.foto.map(f => `<img src="${f}" alt="${k.nama}">`).join('')}</div>` : `<div class="kegiatan-foto-empty"><i class="fas fa-camera me-2"></i>Belum ada foto dokumentasi</div>`;
+            return `<div class="kegiatan-card">
+                ${fotoHtml}
+                <div class="kegiatan-body">
+                    <span class="kg-nama">${k.nama}</span>
+                    <span class="kg-tgl"><i class="far fa-calendar me-1"></i>${k.tanggal}</span>
+                    ${k.deskripsi ? `<div class="kg-desc">${k.deskripsi}</div>` : ''}
+                    <div class="kegiatan-keuangan">
+                        <div><div class="kk-label text-success">Pemasukan</div><div class="kk-val text-success">${formatRupiah(k.masuk || 0)}</div></div>
+                        <div><div class="kk-label text-danger">Pengeluaran</div><div class="kk-val text-danger">${formatRupiah(k.keluar || 0)}</div></div>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+    function renderListKegiatanAdmin(data) {
+        const el = document.getElementById('listKegiatanAdminContainer');
+        if (!data || data.length === 0) { el.innerHTML = '<div class="text-center text-muted small">Belum ada data.</div>'; return; }
+        el.innerHTML = data.map((k, index) => `
+            <div class="donatur-item justify-content-between">
+                <div><div class="fw-bold small">${k.nama}</div><div class="text-muted" style="font-size:0.7rem">${k.tanggal} &bull; ${(k.foto||[]).length} foto</div></div>
+                <div><button class="btn btn-sm text-info me-1" onclick="bukaEditKegiatan(${index})"><i class="fas fa-edit"></i></button><button class="btn btn-sm text-danger" onclick="hapusKegiatan(${index})"><i class="fas fa-trash"></i></button></div>
+            </div>`).join('');
+    }
+    function simpanKegiatan(e) {
+        e.preventDefault();
+        const nama = document.getElementById('namaKegiatan').value, tanggal = document.getElementById('tglKegiatan').value, deskripsi = document.getElementById('deskKegiatan').value,
+              masuk = parseInt(document.getElementById('masukKegiatan').value) || 0, keluar = parseInt(document.getElementById('keluarKegiatan').value) || 0;
+        const btn = e.target.querySelector('button[type="submit"]'); btn.disabled = true; btn.innerText = 'Menyimpan...';
+        const payload = { username: localStorage.getItem('mk_user'), token: localStorage.getItem('mk_token'), nama, tanggal, deskripsi, masuk, keluar, fotoFiles: tempFotoKegiatanBaru.map(p => ({ data: p.data, mimeType: p.mimeType, name: p.name })) };
+        callAPI('tambahKegiatan', payload).then(newData => {
+            globalKegiatan = newData; renderKegiatanPublik(globalKegiatan); renderListKegiatanAdmin(globalKegiatan);
+            toggleFormKegiatan(); alert('Kegiatan Tersimpan!'); e.target.reset(); tempFotoKegiatanBaru = []; document.getElementById('previewFotoKegiatanBaru').innerHTML = '';
+        }).catch(err => {
+            globalKegiatan.push({ id: Date.now(), nama, tanggal, deskripsi, masuk, keluar, foto: tempFotoKegiatanBaru.map(p => p.preview) });
+            renderKegiatanPublik(globalKegiatan); renderListKegiatanAdmin(globalKegiatan);
+            toggleFormKegiatan(); alert('Mode Offline / Demo: Kegiatan disimpan di tampilan saja.'); e.target.reset(); tempFotoKegiatanBaru = []; document.getElementById('previewFotoKegiatanBaru').innerHTML = '';
+        }).finally(() => { btn.disabled = false; btn.innerText = 'Simpan'; });
+    }
+    function bukaEditKegiatan(index) {
+        const k = globalKegiatan[index]; if (!k) return;
+        document.getElementById('editKegiatanIndex').value = index; document.getElementById('editKegiatanOriginalId').value = k.id || '';
+        document.getElementById('editNamaKegiatan').value = k.nama || ''; document.getElementById('editTglKegiatan').value = k.tanggal || '';
+        document.getElementById('editDeskKegiatan').value = k.deskripsi || ''; document.getElementById('editMasukKegiatan').value = k.masuk || 0; document.getElementById('editKeluarKegiatan').value = k.keluar || 0;
+        tempFotoKegiatanEdit = []; document.getElementById('previewFotoKegiatanEdit').innerHTML = '';
+        document.getElementById('modalEditKegiatan').style.display = 'flex';
+    }
+    function tutupEditKegiatan() { document.getElementById('modalEditKegiatan').style.display = 'none'; }
+    function simpanEditKegiatan(e) {
+        e.preventDefault();
+        const idx = document.getElementById('editKegiatanIndex').value;
+        const dataDasar = { id: document.getElementById('editKegiatanOriginalId').value, nama: document.getElementById('editNamaKegiatan').value, tanggal: document.getElementById('editTglKegiatan').value, deskripsi: document.getElementById('editDeskKegiatan').value, masuk: parseInt(document.getElementById('editMasukKegiatan').value) || 0, keluar: parseInt(document.getElementById('editKeluarKegiatan').value) || 0 };
+        const btn = e.target.querySelector('button[type="submit"]'); btn.disabled = true; btn.innerText = 'Mengupdate...';
+        const payload = Object.assign({ username: localStorage.getItem('mk_user'), token: localStorage.getItem('mk_token'), fotoFiles: tempFotoKegiatanEdit.map(p => ({ data: p.data, mimeType: p.mimeType, name: p.name })) }, dataDasar);
+        callAPI('editKegiatan', payload).then(newData => {
+            globalKegiatan = newData; renderKegiatanPublik(globalKegiatan); renderListKegiatanAdmin(globalKegiatan);
+            tutupEditKegiatan(); alert('Kegiatan Berhasil Diupdate!');
+        }).catch(err => {
+            globalKegiatan[idx] = Object.assign({}, globalKegiatan[idx], dataDasar, { foto: (globalKegiatan[idx].foto || []).concat(tempFotoKegiatanEdit.map(p => p.preview)) });
+            renderKegiatanPublik(globalKegiatan); renderListKegiatanAdmin(globalKegiatan);
+            tutupEditKegiatan(); alert('Mode Offline / Demo: Kegiatan diupdate di tampilan saja.');
+        }).finally(() => { btn.disabled = false; btn.innerText = 'UPDATE DATA'; });
+    }
+    function hapusKegiatan(index) {
+        if (!confirm('Yakin hapus kegiatan ini? Foto dokumentasi juga akan terhapus.')) return;
+        const k = globalKegiatan[index];
+        callAPI('hapusKegiatan', { username: localStorage.getItem('mk_user'), token: localStorage.getItem('mk_token'), id: k.id }).then(newData => {
+            globalKegiatan = newData; renderKegiatanPublik(globalKegiatan); renderListKegiatanAdmin(globalKegiatan); alert('Kegiatan dihapus.');
+        }).catch(err => {
+            globalKegiatan.splice(index, 1); renderKegiatanPublik(globalKegiatan); renderListKegiatanAdmin(globalKegiatan);
+            alert('Mode Offline / Demo: Kegiatan dihapus dari tampilan.');
+        });
+    }
+    function toggleFormKegiatan() { document.getElementById('formTambahKegiatan').classList.toggle('d-none'); }
     function initReportDropdowns() { const currentYear=new Date().getFullYear(); let yearOptions=''; for(let i=0;i<5;i++){const y=currentYear-i; yearOptions+=`<option value="${y}">${y}</option>`;} ['rpt_thn_bln','rpt_thn_only','rpt_inv_thn'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=yearOptions;}); }
     function switchReportTab(t) { document.getElementById('viewKeuangan').classList.add('d-none');document.getElementById('viewInventaris').classList.add('d-none'); document.getElementById('tab-keuangan').classList.remove('active');document.getElementById('tab-inventaris').classList.remove('active'); if(t==='keuangan'){document.getElementById('viewKeuangan').classList.remove('d-none');document.getElementById('tab-keuangan').classList.add('active');}else{document.getElementById('viewInventaris').classList.remove('d-none');document.getElementById('tab-inventaris').classList.add('active');} }
     function updateReportForm() { const t=document.getElementById('reportType').value; ['filterBulan','filterTahun','filterKategori','filterDonatur'].forEach(id=>document.getElementById(id).classList.add('d-none')); if(t==='bulanan')document.getElementById('filterBulan').classList.remove('d-none'); if(t==='tahunan')document.getElementById('filterTahun').classList.remove('d-none'); if(t.includes('kategori')){document.getElementById('filterKategori').classList.remove('d-none');if(t.includes('bulan'))document.getElementById('filterBulan').classList.remove('d-none');else document.getElementById('filterTahun').classList.remove('d-none');} if(t==='donatur'){document.getElementById('filterDonatur').classList.remove('d-none');document.getElementById('filterTahun').classList.remove('d-none');} }
@@ -1071,10 +1689,10 @@
         const saldoAkhir = totalMasuk - totalKeluar;
 
         const html = `
-            <div id="dokumenCetak" class="p-2">
-                <div class="text-center mb-4 border-bottom pb-3">
-                    <h5 class="fw-bold mb-1">${title}</h5>
-                    <div class="fw-bold fs-6">MUSHOLLA NURUL ISLAM</div>
+            <div id="dokumenCetak" class="p-2" style="font-family: Georgia, 'Times New Roman', serif;">
+                <div class="text-center mb-4 print-letterhead">
+                    <div class="ph-brand" style="font-size:1.05rem;">MUSHOLLA NURUL ISLAM</div>
+                    <div class="ph-title mb-1" style="font-size:0.95rem;">${title}</div>
                     <small class="text-muted">${periodText}</small>
                 </div>
                 <div class="table-responsive">
@@ -1172,10 +1790,10 @@
         }
 
         const html = `
-            <div id="dokumenCetak" class="p-2">
-                <div class="text-center mb-4 border-bottom pb-3">
-                    <h5 class="fw-bold mb-1">LAPORAN INVENTARIS BARANG</h5>
-                    <div class="fw-bold fs-6">MUSHOLLA NURUL ISLAM</div>
+            <div id="dokumenCetak" class="p-2" style="font-family: Georgia, 'Times New Roman', serif;">
+                <div class="text-center mb-4 print-letterhead">
+                    <div class="ph-brand" style="font-size:1.05rem;">MUSHOLLA NURUL ISLAM</div>
+                    <div class="ph-title mb-1" style="font-size:0.95rem;">LAPORAN INVENTARIS BARANG</div>
                     <small class="text-muted">Periode: Tahun ${y}</small>
                 </div>
                 <div class="table-responsive">
@@ -1211,12 +1829,15 @@
             return;
         }
 
+        const now = new Date();
+        const stamp = now.toISOString().split('T')[0];
         const opt = {
           margin:       [10, 10, 10, 10], 
-          filename:     'Laporan_Musholla.pdf',
+          filename:     `Laporan_Musholla_${stamp}.pdf`,
           image:        { type: 'jpeg', quality: 0.98 },
-          html2canvas:  { scale: 2 }, 
-          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+          html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' }, 
+          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+          pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
         };
 
         const btn = document.querySelector('button[onclick="downloadPDF()"]');
